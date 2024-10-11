@@ -1,0 +1,58 @@
+public class BasicProgram {
+    
+    // Definir algunos atributos (tipos de datos)
+    private int number;
+    private String name;
+    
+    public BasicProgram() {
+        // Inicializando los atributos
+        this.number = 10;
+        this.name = "Ejemplo";
+    }
+    
+    public void performOperations() {
+        // Operadores aritméticos
+        int suma = number + 5;
+        int resta = number - 2;
+        int multiplicacion = number * 3;
+        int division = number / 2;
+
+        // Imprimir los resultados de las operaciones
+        System.out.println("Suma: " + suma);
+        System.out.println("Resta: " + resta);
+        System.out.println("Multiplicación: " + multiplicacion);
+        System.out.println("División: " + division);
+
+        // Operadores relacionales y lógicos
+        if (suma > resta && multiplicacion != division) {
+            System.out.println("La suma es mayor que la resta y los resultados no son iguales.");
+        } else {
+            System.out.println("Condición no cumplida.");
+        }
+    }
+    
+    public void stringManipulation() {
+        // Operaciones con cadenas de texto
+        String saludo = "Hola";
+        String completo = saludo + ", " + name + "!"; // Concatenación de cadenas
+        System.out.println(completo);
+
+        // Comparar cadenas
+        if (saludo.equals("Hola")) {
+            System.out.println("Saludo es 'Hola'");
+        } else {
+            System.out.println("Saludo no es 'Hola'");
+        }
+    }
+    
+    public static void main(String[] args) {
+        // Crear una instancia de la clase
+        BasicProgram ejemplo = new BasicProgram();
+        
+        // Realizar operaciones
+        ejemplo.performOperations();
+        
+        // Manipular cadenas de texto
+        ejemplo.stringManipulation();
+    }
+}
