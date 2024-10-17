@@ -1,1 +1,3 @@
-int valor
+int valor = 3;
+valor = 3;
+int valor;

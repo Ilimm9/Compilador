@@ -348,13 +348,13 @@ public class Compilador extends javax.swing.JFrame {
         /*Eliminacion de errores*/
         gramatica.delete(new String[]{"ERROR", "ERROR1", "ERROR 2"}, 1);
 
-        gramatica.group("valores", "NUMERO_ENTERO | NUMERO_FLOTANTE | IDENTIFICADOR");
+        gramatica.group("numeros", "NUMERO_ENTERO | NUMERO_FLOTANTE" );
         gramatica.group("datos", "DATO_ENTERO | DATO_FLOTANTE | DATO_CARACTER | DATO_BOOL | DATO_CADENA");
         gramatica.group("declaracion", "datos IDENTIFICADOR ", true);
-        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| NUMERO_FLOTANTE| NUMERO_ENTERO|EXP_RELACIONAL)");
+        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| numeros |EXP_RELACIONAL)");
 
         //Operaciones matematicas
-        gramatica.group("OPERACION", "valores OPERADOR_ARITMETICO valores");
+        gramatica.group("OPERACION", "numeros | IDENTIFICADOR OPERADOR_ARITMETICO valores");
         //Expresion relacional
         gramatica.group("EXP_RELACIONAL", " valores OPERADOR_RELACIONAL valores");
         //Expresion logica
@@ -362,7 +362,7 @@ public class Compilador extends javax.swing.JFrame {
         /*Variables*/
         gramatica.group("VARIABLE", "(declaracion| declaracion asignacion| IDENTIFICADOR asignacion) PUNTO_COMA ");
 
-//
+
 //        /*Expresion relacional*/
 //        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
 //
