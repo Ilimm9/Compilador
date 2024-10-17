@@ -313,7 +313,7 @@ public class Compilador extends javax.swing.JFrame {
         clearFields();
         lexicalAnalysis();
         fillTableTokens();
-        //syntacticAnalysis();
+        syntacticAnalysis();
         //semanticAnalysis();
         printConsole();
         codeHasBeenCompiled = true;
@@ -345,8 +345,53 @@ public class Compilador extends javax.swing.JFrame {
 
     private void syntacticAnalysis() {
         Grammar gramatica = new Grammar(tokens, errors);
+        /*Eliminacion de errores*/
+        gramatica.delete(new String[]{"ERROR", "ERROR1", "ERROR 2"}, 1);
 
-        /* Mostrar gramáticas */
+        gramatica.group("valores", "NUMERO_ENTERO | NUMERO_FLOTANTE | IDENTIFICADOR");
+        gramatica.group("datos", "DATO_ENTERO | DATO_FLOTANTE | DATO_CARACTER | DATO_BOOL | DATO_CADENA");
+        gramatica.group("declaracion", "datos IDENTIFICADOR ", true);
+        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| NUMERO_FLOTANTE| NUMERO_ENTERO|EXP_RELACIONAL)");
+
+        //Operaciones matematicas
+        gramatica.group("OPERACION", "valores OPERADOR_ARITMETICO valores");
+        //Expresion relacional
+        gramatica.group("EXP_RELACIONAL", " valores OPERADOR_RELACIONAL valores");
+        //Expresion logica
+        gramatica.group("EXP_LOGICA", " valores OPERADOR_LOGICO valores");
+        /*Variables*/
+        gramatica.group("VARIABLE", "(declaracion| declaracion asignacion| IDENTIFICADOR asignacion) PUNTO_COMA ");
+
+//
+//        /*Expresion relacional*/
+//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+//
+//            // Grupo para expresiones relacionales
+//            gramatica.group("expresion", " valores OPERADOR_RELACIONAL valores");
+//            // Agrupando las expresiones lógicas con un operador relacional o lógico
+//            gramatica.group("EXP_RELACIONAL", "(PARENTESIS_APERTURA expresion PARENTESIS_CIERRE) | EXP_RELACIONAL ");
+//        });
+//
+//        /*Variables*/
+//        gramatica.group("declaracion", "(DATO_ENTERO|DATO_FLOTANTE|DATO_CARACTER|DATO_BOOL|DATO_CADENA) IDENTIFICADOR ");
+//        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| NUMERO_FLOTANTE| NUMERO_ENTERO|expresion)");
+//        gramatica.group("VARIABLE", "(declaracion | declaracion asignacion | IDENTIFICADOR asignacion) PUNTO_COMA ");
+//
+//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+//            // Extendiendo la expresión lógica para incluir operadores lógicos
+//            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
+//            gramatica.group("EXP_LOGICA", "(PARENTESIS_APERTURA EXP_LOGICA PARENTESIS_CIERRE) | EXP_LOGICA");
+//        });
+//
+//        gramatica.group("DECLARACION", "VAR_ENTERA | VAR_FLOTANTE | VAR_CARACTER | VAR_BOOL | VAR_TEXTO | CONDICIONAL_IF ");
+//        gramatica.group("BLOQUE", "LLAVE_APERTURA (DECLARACION)* LLAVE_CIERRE");
+//
+//        gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL)"
+//                + "BLOQUE");
+
+        /*Funciones*/
+ /*Estructuras de control (if, switch*/
+ /* Mostrar gramáticas */
         gramatica.show();
     }
 

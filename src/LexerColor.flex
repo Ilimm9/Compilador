@@ -47,8 +47,6 @@ class | public | private | protected | static | final | void | return
 /*OPERADORES ARITMÉTICOS*/
 "+" | "-" | "*" | "/" | "%"  { /*Ignorar*/}
 
-/*OBJETO*/
-
 /*OPERADORES RELACIONALES*/
 "==" | "!=" | ">" | "<" | ">=" | "<="  { /*Ignorar*/ } 
 
@@ -62,7 +60,14 @@ class | public | private | protected | static | final | void | return
 \"([^\"\\]|\\.)*\" { return textColor(yychar, yylength(), new Color(0, 143, 57));} /*Verde*/
 
 /*DELIMITADORES*/
-"{" | "}" | "(" | ")" | ";" | ","  { /*Ignorar*/} 
+";"  { /*Ignorar*/ }
+"("  {/*Ignorar*/}
+ ")"  {/*Ignorar*/}
+"{"   {/*Ignorar*/}
+ "}"  {/*Ignorar*/}
+"["   {/*Ignorar*/}
+ "]"  {/*Ignorar*/}
+","  {/*Ignorar*/}
 
 (int|float|double|char|boolean|byte|short|String|long)\[\]   {/*Ignorar*/}
 

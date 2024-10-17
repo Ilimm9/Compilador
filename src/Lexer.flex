@@ -35,13 +35,31 @@ Numero = 0 | [1-9][0-9]*
 {Comentario}|{EspacioEnBlanco} { /*Ignorar*/ }
 
 /*TIPOS DE DATOS*/
-int     | float   | double  | char  | boolean | String | long | short | byte 
-        { return token(yytext(), "TIPO_DATO", yyline, yycolumn); }
+int |long | short | byte 
+        { return token(yytext(), "DATO_ENTERO", yyline, yycolumn); }
+ float   | double  
+    { return token(yytext(), "DATO_FLOTANTE", yyline, yycolumn); }
+char  
+    { return token(yytext(), "DATO_CARACTER", yyline, yycolumn); }
+boolean
+    { return token(yytext(), "DATO_BOOL", yyline, yycolumn); }
+String
+    { return token(yytext(), "DATO_CADENA", yyline, yycolumn); }
 
 /*PALABRAS CLAVE*/
 class | public | private | protected | static | final | void | return 
-      | new | if | else | while | do | for | switch | case | break | continue |System |new
+      | new | switch | case | break | continue |System |new
       { return token(yytext(), "PALABRA_CLAVE", yyline, yycolumn); }
+"if" 
+    { return token(yytext(), "IF", yyline, yycolumn); }
+"else" 
+    { return token(yytext(), "ELSE", yyline, yycolumn); }
+"while" 
+    { return token(yytext(), "WHILE", yyline, yycolumn); }
+"do" 
+    { return token(yytext(), "DO", yyline, yycolumn); }
+"for" 
+    { return token(yytext(), "FOR", yyline, yycolumn); }
 
 /*OPERADORES ARITMÉTICOS*/
 "+" | "-" | "*" | "/" | "%" 
@@ -62,8 +80,23 @@ class | public | private | protected | static | final | void | return
 \"([^\"\\]|\\.)*\" { return token(yytext(), "CADENA_TEXTO", yyline, yycolumn); }
 
 /*DELIMITADORES*/
-"{" | "}" | "(" | ")" | ";" | "," 
-    { return token(yytext(), "DELIMITADOR", yyline, yycolumn); }
+";" 
+    { return token(yytext(), "PUNTO_COMA", yyline, yycolumn); }
+"(" 
+    { return token(yytext(), "PARENTESIS_A", yyline, yycolumn); }
+ ")" 
+    { return token(yytext(), "PARENTESIS_C", yyline, yycolumn); }
+"{" 
+    { return token(yytext(), "LLAVE_A", yyline, yycolumn); }
+ "}" 
+    { return token(yytext(), "LLAVE_C", yyline, yycolumn); }
+"[" 
+    { return token(yytext(), "CORCHETE_A", yyline, yycolumn); }
+ "]" 
+    { return token(yytext(), "CORCHETE_C", yyline, yycolumn); }
+"," 
+    { return token(yytext(), "COMA", yyline, yycolumn); }
+
 
 (int|float|double|char|boolean|byte|short|String|long)\[\]   {return token(yytext(),  "ARRAY_TYPE",  yyline, yycolumn); }
 
@@ -74,8 +107,10 @@ class | public | private | protected | static | final | void | return
 [0-9]+\.[0-9]+ { return token(yytext(), "NUMERO_FLOTANTE", yyline, yycolumn); }
 
 /*OPERADORES DE ASIGNACIÓN*/
-"=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>=" 
+ "+=" | "-=" | "*=" | "/=" | "%="  | "^=" 
     { return token(yytext(), "OPERADOR_ASIGNACION", yyline, yycolumn); }
+"=" 
+    { return token(yytext(), "ASIGNACION_IGUAL", yyline, yycolumn); }
 
 /*OPERADOR DE ACCESO*/
 "." { return token(yytext(), "OPERADOR_ACCESO", yyline, yycolumn); }
