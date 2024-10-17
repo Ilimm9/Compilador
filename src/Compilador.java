@@ -348,49 +348,48 @@ public class Compilador extends javax.swing.JFrame {
         /*Eliminacion de errores*/
         gramatica.delete(new String[]{"ERROR", "ERROR1", "ERROR 2"}, 1);
 
-        gramatica.group("numeros", "NUMERO_ENTERO | NUMERO_FLOTANTE" );
+        gramatica.group("dec_entero", "DATO_ENTERO IDENTIFICADOR");
+        gramatica.group("asig_entero", "ASIGNACION_IGUAL (NUMERO_ENTERO | NUMERO_FLOTANTE |IDENTIFICADOR)");
+        gramatica.group("var_entero", "(IDENTIFICADOR asig_entero| dec_entero| dec_entero asig_entero ) PUNTO_COMA ");
+
+        gramatica.group("numeros", "NUMERO_ENTERO | NUMERO_FLOTANTE");
         gramatica.group("datos", "DATO_ENTERO | DATO_FLOTANTE | DATO_CARACTER | DATO_BOOL | DATO_CADENA");
         gramatica.group("declaracion", "datos IDENTIFICADOR ", true);
-        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| numeros |EXP_RELACIONAL)");
+        gramatica.group("OPERACION", "(numeros | IDENTIFICADOR) OPERADOR_ARITMETICO (numeros | IDENTIFICADOR)");
+        //Operaciones Anidados Relacional
+        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+            // Grupo para expresiones relacionales
+            gramatica.group("EXP_RELACIONAL", " (numeros | IDENTIFICADOR) OPERADOR_RELACIONAL (numeros | IDENTIFICADOR)");
+            gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A EXP_RELACIONAL PARENTESIS_C) | EXP_RELACIONAL ");
+        });
 
-        //Operaciones matematicas
-        gramatica.group("OPERACION", "numeros | IDENTIFICADOR OPERADOR_ARITMETICO valores");
-        //Expresion relacional
-        gramatica.group("EXP_RELACIONAL", " valores OPERADOR_RELACIONAL valores");
         //Expresion logica
-        gramatica.group("EXP_LOGICA", " valores OPERADOR_LOGICO valores");
+//        gramatica.group("EXP_LOGICA", " (numeros | IDENTIFICADOR) OPERADOR_LOGICO (numeros | IDENTIFICADOR)");
+        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| numeros |EXP_RELACIONAL |OPERACION |EXP_LOGICA |IDENTIFICADOR)");
+
         /*Variables*/
-        gramatica.group("VARIABLE", "(declaracion| declaracion asignacion| IDENTIFICADOR asignacion) PUNTO_COMA ");
+        gramatica.group("VARIABLE", "(IDENTIFICADOR asignacion| declaracion| declaracion asignacion) PUNTO_COMA ");
 
+        //Operaciones Anidados Logicas
+        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+            gramatica.group("EXP_LOGICA", "  IDENTIFICADOR OPERADOR_LOGICO  IDENTIFICADOR");
+            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
+            gramatica.group("EXP_LOGICA", "(PARENTESIS_APERTURA EXP_LOGICA PARENTESIS_CIERRE) | EXP_LOGICA");
+        });
 
-//        /*Expresion relacional*/
-//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-//
-//            // Grupo para expresiones relacionales
-//            gramatica.group("expresion", " valores OPERADOR_RELACIONAL valores");
-//            // Agrupando las expresiones lógicas con un operador relacional o lógico
-//            gramatica.group("EXP_RELACIONAL", "(PARENTESIS_APERTURA expresion PARENTESIS_CIERRE) | EXP_RELACIONAL ");
-//        });
-//
-//        /*Variables*/
-//        gramatica.group("declaracion", "(DATO_ENTERO|DATO_FLOTANTE|DATO_CARACTER|DATO_BOOL|DATO_CADENA) IDENTIFICADOR ");
-//        gramatica.group("asignacion", " ASIGNACION_IGUAL (CADENA_TEXTO| NUMERO_FLOTANTE| NUMERO_ENTERO|expresion)");
-//        gramatica.group("VARIABLE", "(declaracion | declaracion asignacion | IDENTIFICADOR asignacion) PUNTO_COMA ");
-//
-//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-//            // Extendiendo la expresión lógica para incluir operadores lógicos
-//            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
-//            gramatica.group("EXP_LOGICA", "(PARENTESIS_APERTURA EXP_LOGICA PARENTESIS_CIERRE) | EXP_LOGICA");
-//        });
-//
-//        gramatica.group("DECLARACION", "VAR_ENTERA | VAR_FLOTANTE | VAR_CARACTER | VAR_BOOL | VAR_TEXTO | CONDICIONAL_IF ");
-//        gramatica.group("BLOQUE", "LLAVE_APERTURA (DECLARACION)* LLAVE_CIERRE");
-//
-//        gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL)"
-//                + "BLOQUE");
+        //Operaciones Anidados Aritmeticas
+        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+            // Extendiendo la expresión lógica para incluir operadores lógicos
+//            gramatica.group("OPERACION", "(numeros | IDENTIFICADOR) OPERADOR_ARITMETICO (numeros | IDENTIFICADOR)");
+//            gramatica.group("OPERACION", "(numeros | IDENTIFICADOR| OPERACION) OPERACION");
+        });
 
-        /*Funciones*/
- /*Estructuras de control (if, switch*/
+        //Bloque if
+        gramatica.group("DECLARACION", "VARIABLE| CONDICIONAL_IF ");
+        gramatica.group("BLOQUE", "LLAVE_A (DECLARACION)* LLAVE_C");
+        gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL) BLOQUE");
+
+        /*Estructuras de control (if, switch*/
  /* Mostrar gramáticas */
         gramatica.show();
     }
