@@ -39,6 +39,11 @@ Numero = 0 | [1-9][0-9]*
 int | float | double | char | boolean | String | long | short | byte 
     { return textColor(yychar, yylength(), new Color(0, 0, 255));} /* Azul*/
 
+true
+    { /*Ignorar*/ } 
+false
+    { /*Ignorar*/ } 
+
 /*PALABRAS CLAVE*/
 class | public | private | protected | static | final | void | return 
       | new | if | else | while | do | for | switch | case | break | continue | System |new
@@ -81,7 +86,7 @@ class | public | private | protected | static | final | void | return
 "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" | "^=" | "<<=" | ">>=" { /*Ignorar*/ } 
 
 /*OPERADOR DE ACCESO*/
-"." { return textColor(yychar, yylength(), new Color(252, 247, 94));} 
+"." { return textColor(yychar, yylength(), new Color(252, 15, 92));} 
 
 /*ERROR*/
 . { return textColor(yychar, yylength(), new Color(255, 0, 0)); } 

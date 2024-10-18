@@ -46,10 +46,21 @@ boolean
 String
     { return token(yytext(), "DATO_CADENA", yyline, yycolumn); }
 
+true
+    { return token(yytext(), "TRUE", yyline, yycolumn); }
+false
+    { return token(yytext(), "FALSE", yyline, yycolumn); }
+
 /*PALABRAS CLAVE*/
 class | public | private | protected | static | final | void | return 
-      | new | switch | case | break | continue |System |new
+      | new | switch | case | break | continue |new
       { return token(yytext(), "PALABRA_CLAVE", yyline, yycolumn); }
+"System" 
+    { return token(yytext(), "SYSTEM", yyline, yycolumn); }
+"println" 
+    { return token(yytext(), "PRINTLN", yyline, yycolumn); }
+"out" 
+    { return token(yytext(), "OUT", yyline, yycolumn); }
 "if" 
     { return token(yytext(), "IF", yyline, yycolumn); }
 "else" 
@@ -62,8 +73,20 @@ class | public | private | protected | static | final | void | return
     { return token(yytext(), "FOR", yyline, yycolumn); }
 
 /*OPERADORES ARITMÉTICOS*/
-"+" | "-" | "*" | "/" | "%" 
-    { return token(yytext(), "OPERADOR_ARITMETICO", yyline, yycolumn); }
+"+"  
+    { return token(yytext(), "SUMA", yyline, yycolumn); }
+"++"  
+    { return token(yytext(), "INCREMENTAL", yyline, yycolumn); }
+"-" 
+    { return token(yytext(), "RESTA", yyline, yycolumn); }
+"--"  
+    { return token(yytext(), "DECREMENTAL", yyline, yycolumn); }
+"*" 
+    { return token(yytext(), "MULTIPLICACION", yyline, yycolumn); }
+"/" 
+    { return token(yytext(), "DIVISION", yyline, yycolumn); }
+"%" 
+    { return token(yytext(), "MODULO", yyline, yycolumn); }
 
 /*OPERADORES RELACIONALES*/
 "==" | "!=" | ">" | "<" | ">=" | "<=" 
@@ -78,6 +101,9 @@ class | public | private | protected | static | final | void | return
 
 /*CADENAS DE TEXTO*/
 \"([^\"\\]|\\.)*\" { return token(yytext(), "CADENA_TEXTO", yyline, yycolumn); }
+
+/* CARACTERES */
+'([^'\\]|\\.)' { return token(yytext(), "CARACTER", yyline, yycolumn); }
 
 /*DELIMITADORES*/
 ";" 
@@ -113,6 +139,6 @@ class | public | private | protected | static | final | void | return
     { return token(yytext(), "ASIGNACION_IGUAL", yyline, yycolumn); }
 
 /*OPERADOR DE ACCESO*/
-"." { return token(yytext(), "OPERADOR_ACCESO", yyline, yycolumn); }
+"." { return token(yytext(), "PUNTO", yyline, yycolumn); }
 
 . { return token(yytext(), "ERROR", yyline, yycolumn); }
