@@ -46,6 +46,13 @@ boolean
 String
     { return token(yytext(), "DATO_CADENA", yyline, yycolumn); }
 
+true
+    { return token(yytext(), "TRUE", yyline, yycolumn); }
+false
+    { return token(yytext(), "FALSE", yyline, yycolumn); }
+
+
+
 /*PALABRAS CLAVE*/
 class | public | private | protected | static | final | void | return 
       | new | switch | case | break | continue |System |new
