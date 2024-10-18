@@ -352,6 +352,10 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("asig_entero", "ASIGNACION_IGUAL (NUMERO_ENTERO | NUMERO_FLOTANTE |IDENTIFICADOR)");
         gramatica.group("var_entero", "(IDENTIFICADOR asig_entero| dec_entero| dec_entero asig_entero ) PUNTO_COMA ");
 
+        gramatica.group("dec_char", "DATO_CARACTER IDENTIFICADOR");
+        gramatica.group("asig_caracter", "ASIGNACION_IGUAL CARACTER");
+        gramatica.group("var_caracter", "(IDENTIFICADOR asig_caracter| dec_char| dec_char asig_caracter ) PUNTO_COMA ");
+
         gramatica.group("numeros", "NUMERO_ENTERO | NUMERO_FLOTANTE");
         gramatica.group("datos", "DATO_ENTERO | DATO_FLOTANTE | DATO_CARACTER | DATO_BOOL | DATO_CADENA");
         gramatica.group("declaracion", "datos IDENTIFICADOR ", true);
@@ -389,8 +393,15 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("BLOQUE", "LLAVE_A (DECLARACION)* LLAVE_C");
         gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL) BLOQUE");
 
-        /*Estructuras de control (if, switch*/
- /* Mostrar gramáticas */
+// /* Estructura WHILE */
+//        gramatica.group("BUCLE_WHILE", "WHILE PARENTESIS_A (EXP_LOGICA | EXP_RELACIONAL) PARENTESIS_C BLOQUE");
+//       
+//        // Concatenación de cadenas
+//        gramatica.group("CONCATENACION", "(CADENA_TEXTO | IDENTIFICADOR) OPERADOR_CONCATENACION (CADENA_TEXTO | IDENTIFICADOR | CONCATENACION)");
+//
+//        gramatica.group("BLOQUE", "LLAVE_A (DECLARACION | CONDICIONAL_IF | BUCLE_WHILE)* LLAVE_C");
+
+        /* Mostrar gramáticas */
         gramatica.show();
     }
 
