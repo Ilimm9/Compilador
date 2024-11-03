@@ -54,7 +54,7 @@ false
 /*PALABRAS CLAVE*/
 class | public | private | protected | static | final | void | return 
       | new | switch | case | break | continue |new
-      { return token(yytext(), "PALABRA_CLAVE", yyline, yycolumn); }
+      { return token(yytext(), "PALABRA_RESERVADA", yyline, yycolumn); }
 "System" 
     { return token(yytext(), "SYSTEM", yyline, yycolumn); }
 "println" 

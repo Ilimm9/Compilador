@@ -1,3 +1,10 @@
-@
-System.out.println("Vota chamaco")
-if(a<a)
+//crea un numero 
+
+public static void main(String [] args){
+   int edad = 16;
+String h="";
+if(edad==18){
+System.out.println("Ya vota señor");
+}els{
+System.out.println("No puedes votar niño");}
+}

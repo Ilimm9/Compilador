@@ -348,31 +348,26 @@ public class Compilador extends javax.swing.JFrame {
         /*Eliminacion de errores*/
         gramatica.delete(new String[]{"ERROR", "ERROR1", "ERROR 2"}, 1);
 
-// Definir System.out.println
-        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C PUNTO_COMA");
-        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
-                2, "Error sintáctico: falta punto y coma [# , %]");
-
-//        //Operaciones Anidados Relacional
+        //Operaciones Anidados Relacional
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             // Grupo para expresiones relacionales
             gramatica.group("EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR) OPERADOR_RELACIONAL (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR)");
             gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A EXP_RELACIONAL PARENTESIS_C) | EXP_RELACIONAL ");
         });
 
-        //Operaciones Anidados Logicas
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-            gramatica.group("EXP_LOGICA", " IDENTIFICADOR OPERADOR_LOGICO IDENTIFICADOR");
-            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
-            gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C | EXP_LOGICA");
+            gramatica.group("EXP_ARIMETICA", "PARENTESIS_A EXP_ARITMETICA PARENTESIS_C  ");
+            gramatica.group("EXP_ARITMETICA", "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE) (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE)  ");
+            gramatica.group("EXP_ARIMETICA", "EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) EXP_ARITMETICA  ");
+            gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL  EXP_ARIMETICA");
         });
 
         gramatica.group("DEC_ENTERO", "DATO_ENTERO IDENTIFICADOR");
-        gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL (NUMERO_ENTERO | IDENTIFICADOR)");
-        gramatica.group("VAR_ENTERO", "(IDENTIFICADOR ASIG_ENTERO| DEC_ENTERO| DEC_ENTERO ASIG_ENTERO ) PUNTO_COMA ");
+        gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL (NUMERO_ENTERO | IDENTIFICADOR )");
+        gramatica.group("VAR_ENTERO", "(IDENTIFICADOR ASIG_ENTERO| DEC_ENTERO ASIG_ENTERO | DEC_ENTERO ) PUNTO_COMA ");
 
         gramatica.group("DEC_FLOTANTE", "DATO_FLOTANTE IDENTIFICADOR");
-        gramatica.group("ASIG_FLOTANTE", "ASIGNACION_IGUAL (NUMERO_FLOTANTE | IDENTIFICADOR)");
+        gramatica.group("ASIG_FLOTANTE", "ASIGNACION_IGUAL (NUMERO_FLOTANTE | IDENTIFICADOR | EXP_ARITMETICA)");
         gramatica.group("VAR_FLOTANTE", "(IDENTIFICADOR ASIG_FLOTANTE| DEC_FLOTANTE| DEC_FLOTANTE ASIG_FLOTANTE ) PUNTO_COMA ");
 
         gramatica.group("DEC_BOOL", "DATO_BOOL IDENTIFICADOR");
@@ -386,28 +381,107 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("DEC_CHAR", "DATO_CARACTER IDENTIFICADOR");
         gramatica.group("ASIG_CHAR", "ASIGNACION_IGUAL CARACTER");
         gramatica.group("VAR_CHAR", "(IDENTIFICADOR ASIG_CHAR| DEC_CHAR| DEC_CHAR ASIG_CHAR ) PUNTO_COMA ");
+//
+//        gramatica.group("ERR_EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR)?  (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR)?", true,
+//                5, "Error sintáctico {}: falta operador relacional entre operandos [# , %]");
+        gramatica.group("ERR_EXP_RELACIONAL", "PARENTESIS_A EXP_RELACIONAL  ", true,
+                6, "Error sintáctico {}: falta cierre de paréntesis en expresión relacional [# , %]");
+        gramatica.delete("ERR_EXP_RELACIONAL", 9, " Error {}: Expresión relacional no esta declarada correctamente [# , %]");
+
+        gramatica.group("ERR_VAR_ENTERO", " (IDENTIFICADOR ASIG_ENTERO) | DEC_ENTERO | (DEC_ENTERO ASIG_ENTERO)", true,
+                8, "Error {}: Falta punto y coma en declaracion  [# , %]");
+//        gramatica.group("ERR_VAR_ENTERO", "(ASIG_ENTERO PUNTO_COMA)| ASIG_ENTERO ", true, 9, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("ERR_VAR_ENTERO", "(IDENTIFICADOR ) PUNTO_COMA ", true,
+                7, "Error {}: Falta asignación o tipo de dato [# , %]");
+        gramatica.delete("ERR_VAR_ENTERO", 10, " × Error sintáctico {}: La variable entera no está declarada correctamente [#, %]");
+
+        gramatica.group("ERR_VAR_FLOTANTE", " IDENTIFICADOR ASIG_FLOTANTE | DEC_FLOTANTE | DEC_FLOTANTE ASIG_FLOTANTE ", true,
+                11, "Error {}: Falta punto y coma en declaracion  [# , %]");
+//        gramatica.group("ERR_VAR_FLOTANTE", "(ASIG_FLOTANTE PUNTO_COMA)| ASIG_FLOTANTE ", true,12, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("ERR_VAR_FLOTANTE", "(IDENTIFICADOR ) PUNTO_COMA ", true,
+                13, "Error {}: Falta asignación o tipo de dato [# , %]");
+        gramatica.delete("ERR_VAR_FLOTANTE", 14, " × Error sintáctico {}: La variable flotante no está declarada correctamente [#, %]");
+
+        gramatica.group("ERR_VAR_BOOL", " IDENTIFICADOR ASIG_BOOL | DEC_BOOL | DEC_BOOL ASIG_BOOL ", true,
+                15, "Error {}: Falta punto y coma en declaracion  [# , %]");
+//        gramatica.group("ERR_VAR_BOOL", "(ASIG_BOOL PUNTO_COMA)| ASIG_BOOL ", true,16, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("ERR_VAR_BOOL", "(IDENTIFICADOR ) PUNTO_COMA ", true,
+                17, "Error {}: Falta asignación o tipo de dato [# , %]");
+        gramatica.delete("ERR_VAR_BOOL", 18, " × Error sintáctico {}: La variable booleana no está declarada correctamente [#, %]");
+
+        gramatica.group("ERR_VAR_CADENA", " IDENTIFICADOR ASIG_CADENA | DEC_CADENA | DEC_CADENA ASIG_CADENA ", true,
+                19, "Error {}: Falta punto y coma en declaracion  [# , %]");
+//        gramatica.group("ERR_VAR_CADENA", "(ASIG_CADENA PUNTO_COMA)| ASIG_CADENA ", true,20, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("ERR_VAR_CADENA", "(IDENTIFICADOR ) CADENA ", true,
+                21, "Error {}: Falta asignación o tipo de dato [# , %]");
+        gramatica.delete("ERR_VAR_CADENA", 22, " × Error sintáctico {}: La variable cadena no está declarada correctamente [#, %]");
+
+        gramatica.group("ERR_VAR_CHAR", " IDENTIFICADOR ASIG_CHAR | DEC_CHAR | DEC_CHAR ASIG_CHAR ", true,
+                23, "Error {}: Falta punto y coma en declaracion  [# , %]");
+//        gramatica.group("ERR_VAR_CHAR", "(ASIG_CHAR PUNTO_COMA)| ASIG_CHAR ", true,24, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("ERR_VAR_CHAR", "(IDENTIFICADOR ) CHAR ", true,
+                25, "Error {}: Falta asignación o tipo de dato [# , %]");
+        gramatica.delete("ERR_VAR_CHAR", 26, " × Error sintáctico {}: La variable carácter no está declarada correctamente [#, %]");
+
+// Definir System.out.println
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C PUNTO_COMA");
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
+                2, "Error sintáctico: falta punto y coma [# , %]");
+//       
+        //Operaciones Anidados Logicas
+        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+            gramatica.group("EXP_LOGICA", " IDENTIFICADOR OPERADOR_LOGICO IDENTIFICADOR");
+            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
+            gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C | EXP_LOGICA");
+        });
 
         gramatica.group("POS", "(IDENTIFICADOR DECREMENTAL) | (IDENTIFICADOR INCREMENTAL)");
         gramatica.group("PRE", "(INCREMENTAL IDENTIFICADOR) | (DECREMENTAL IDENTIFICADOR)");
 
+//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+//            // Expresión aritmética general, incluyendo paréntesis y operadores encadenados
+//            gramatica.group("EXP_ARIMETICA", "(NUMERO_ENTERO | NUMERO_FLOTANTE | IDENTIFICADOR | PARENTESIS_A EXP_ARIMETICA PARENTESIS_C) "
+//                    + "(SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO)? "
+//                    + "(EXP_ARIMETICA)?");
+//            // Alternativa que permite la agrupación de expresiones entre paréntesis
+//            gramatica.group("EXP_ARIMETICA", "(PARENTESIS_A)? EXP_ARIMETICA (PARENTESIS_C)? "
+//                    + "(SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO)? "
+//                    + "(EXP_ARIMETICA)?");
+//        });
+//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+//            gramatica.group("SEGUNDA", "(SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR)");
+//            gramatica.group("OPERADOR", "(NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR | OPERADOR)* (SEGUNDA)*");
+//            gramatica.group("EXP_ARIMETICA", "OPERADOR | (PARENTESIS_A)? OPERADOR (PARENTESIS_C)? ((SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO))? OPERADOR ");
+//            gramatica.group("EXP_ARIMETICA", "(PARENTESIS_A)? EXP_ARIMETICA (PARENTESIS_C)? ((SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO))? OPERADOR ");
+//        });
+//        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+//            gramatica.group("EXP_ARIMETICA", "(NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR ) (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (EXP_ARIMETICA)+");
+//            gramatica.group("EXP_ARIMETICA", "(PARENTESIS_A)? EXP_ARIMETICA (PARENTESIS_C)? ((SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO))? OPERADOR ");
+//        });
+        //Bloque if
+//        gramatica.group("DECLARACION", "CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO ");
+//        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA)* LLAVE_C");
+//        gramatica.group("BLOQUE", "DECLARACION");
+        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)* LLAVE_C");
+        gramatica.group("BLOQUE", "(CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)");
+
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-            gramatica.group("SEGUNDA", "(SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR)");
-            gramatica.group("OPERADOR", "(NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR | OPERADOR)* (SEGUNDA)*");
-            gramatica.group("EXP_ARIMETICA", "OPERADOR | (PARENTESIS_A)? OPERADOR (PARENTESIS_C)? ((SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO))? OPERADOR ");
-            gramatica.group("EXP_ARIMETICA", "(PARENTESIS_A)? EXP_ARIMETICA (PARENTESIS_C)? ((SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO))? OPERADOR ");
+            gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL) BLOQUE");
+            gramatica.group("ELSE IF", "ELSE CONDICIONAL_IF");
+            gramatica.group("ELSE", "ELSE BLOQUE");
+            gramatica.group("CONDICIONAL_IF_ELSE", "CONDICIONAL_IF ELSE");
+
         });
 
-        //Bloque if
-        gramatica.group("DECLARACION", "CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CONDICIONAL_IF ");
-        gramatica.group("BLOQUE", "LLAVE_A (DECLARACION)* LLAVE_C");
-        gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL) BLOQUE");
-        // Error para la declaración if sin un bloque
-        gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL)  ", true,
+        gramatica.group("ERROR_CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL)  ", true,
                 3, "Error sintáctico {}: falta bloque en la declaración if [# , %]");
-
-
+        // Error para if sin un bloque
         /* Estructura WHILE */
         gramatica.group("BUCLE_WHILE", "WHILE (PARENTESIS_A)? (EXP_LOGICA | EXP_RELACIONAL) (PARENTESIS_C)? BLOQUE");
+
+        gramatica.group("BUCLE_WHILE", "WHILE   BLOQUE", true,
+                4, "Error sintáctico: falta declaración de while [# , %]");
+        // Error para while sin declaracion 
 
         // Concatenación de cadenas
 //        gramatica.group("CONCATENACION", "(CADENA_TEXTO | IDENTIFICADOR) OPERADOR_CONCATENACION (CADENA_TEXTO | IDENTIFICADOR | CONCATENACION)");

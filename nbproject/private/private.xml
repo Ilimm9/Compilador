@@ -5,7 +5,9 @@
         <group>
             <file>file:/Users/ili/Desktop/Automatas/src/LexerColor.flex</file>
             <file>file:/Users/ili/Desktop/Automatas/src/Lexer.flex</file>
+            <file>file:/Users/ili/Desktop/Automatas/src/ExecuteJFlex.java</file>
             <file>file:/Users/ili/Desktop/Automatas/src/Compilador.java</file>
+            <file>file:/Users/ili/Desktop/Automatas/src/LexerColor.java</file>
         </group>
     </open-files>
 </project-private>

@@ -986,7 +986,7 @@ class Lexer {
             // fall through
           case 75: break;
           case 32:
-            { return token(yytext(), "PALABRA_CLAVE", yyline, yycolumn);
+            { return token(yytext(), "PALABRA_RESERVADA", yyline, yycolumn);
             }
             // fall through
           case 76: break;
