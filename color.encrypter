@@ -1,9 +1,12 @@
-for(int i = 0; i < 15; i++){
-System.out.println("HolaMundo");
-int entero = 15;
-boolean valor = true;
-}
+int valor;
+double valor2;
+char valor3;
+String valor4;
+boolean valor5;
 
-public static void main(String[] args){
-System.out.println("HolaMundo");
-}
+
+valor = 3;
+valor2 = 3.3;
+valor3 = 'a';
+valor4 = "HolaMundo";
+valor5 =true;

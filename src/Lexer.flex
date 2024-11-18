@@ -53,7 +53,7 @@ true
 false
     { return token(yytext(), "FALSE", yyline, yycolumn); }
 
-Class 
+class 
     { return token(yytext(), "CLASS", yyline, yycolumn); }
 
 public 

@@ -310,6 +310,7 @@ public class Compilador extends javax.swing.JFrame {
     }//GEN-LAST:event_btnEjecutarActionPerformed
 
     private void compile() {
+        //Grammar gramatica = new Grammar(tokens, errors);
         clearFields();
         lexicalAnalysis();
         fillTableTokens();
@@ -345,6 +346,7 @@ public class Compilador extends javax.swing.JFrame {
 
     private void syntacticAnalysis() {
         Grammar gramatica = new Grammar(tokens, errors);
+
         /*Eliminacion de errores*/
         gramatica.delete(new String[]{"ERROR", "ERROR1", "ERROR 2"}, 1);
 
@@ -369,69 +371,42 @@ public class Compilador extends javax.swing.JFrame {
             gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C | EXP_LOGICA");
         });
 
-        gramatica.group("DEC_ENTERO", "DATO_ENTERO IDENTIFICADOR", true);
-        gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL (NUMERO_ENTERO | IDENTIFICADOR | EXP_ARITMETICA )", true);
+        gramatica.group("DEC_ENTERO", "DATO_ENTERO IDENTIFICADOR", true, identProd);
+        gramatica.group("DEC_FLOTANTE", "DATO_FLOTANTE IDENTIFICADOR", true, identProd);
+        gramatica.group("DEC_BOOL", "DATO_BOOL IDENTIFICADOR", true, identProd);
+        gramatica.group("DEC_CADENA", "DATO_CADENA IDENTIFICADOR", true, identProd);
+        gramatica.group("DEC_CHAR", "DATO_CARACTER IDENTIFICADOR", true, identProd);
+
+        gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL (NUMERO_ENTERO | IDENTIFICADOR | EXP_ARITMETICA )", true, identProd);
         gramatica.group("VAR_ENTERO", "(IDENTIFICADOR ASIG_ENTERO| DEC_ENTERO ASIG_ENTERO | DEC_ENTERO ) PUNTO_COMA ", true, identProd);
 
-        gramatica.group("DEC_FLOTANTE", "DATO_FLOTANTE IDENTIFICADOR");
-        gramatica.group("ASIG_FLOTANTE", "ASIGNACION_IGUAL (NUMERO_FLOTANTE | IDENTIFICADOR | EXP_ARITMETICA)");
-        gramatica.group("VAR_FLOTANTE", "(IDENTIFICADOR ASIG_FLOTANTE| DEC_FLOTANTE| DEC_FLOTANTE ASIG_FLOTANTE ) PUNTO_COMA ");
+        gramatica.group("ASIG_FLOTANTE", "ASIGNACION_IGUAL (NUMERO_FLOTANTE | IDENTIFICADOR | EXP_ARITMETICA)", identProd);
+        gramatica.group("VAR_FLOTANTE", "(IDENTIFICADOR ASIG_FLOTANTE| DEC_FLOTANTE| DEC_FLOTANTE ASIG_FLOTANTE ) PUNTO_COMA ", true, identProd);
 
-        gramatica.group("DEC_BOOL", "DATO_BOOL IDENTIFICADOR");
-        gramatica.group("ASIG_BOOL", "ASIGNACION_IGUAL (TRUE | FALSE | EXP_RELACIONAL | EXP_LOGICA)");
-        gramatica.group("VAR_BOOL", "(IDENTIFICADOR ASIG_BOOL| DEC_BOOL| DEC_BOOL ASIG_BOOL ) PUNTO_COMA ");
+        gramatica.group("ASIG_BOOL", "ASIGNACION_IGUAL (TRUE | FALSE | EXP_RELACIONAL | EXP_LOGICA)", identProd);
+        gramatica.group("VAR_BOOL", "(IDENTIFICADOR ASIG_BOOL| DEC_BOOL| DEC_BOOL ASIG_BOOL ) PUNTO_COMA ", true, identProd);
 
-        gramatica.group("DEC_CADENA", "DATO_CADENA IDENTIFICADOR");
-        gramatica.group("ASIG_CADENA", "ASIGNACION_IGUAL CADENA_TEXTO");
-        gramatica.group("VAR_CADENA", "(IDENTIFICADOR ASIG_CADENA| DEC_CADENA| DEC_CADENA ASIG_CADENA ) PUNTO_COMA ");
+        gramatica.group("ASIG_CADENA", "ASIGNACION_IGUAL CADENA_TEXTO", identProd);
+        gramatica.group("VAR_CADENA", "(IDENTIFICADOR ASIG_CADENA| DEC_CADENA| DEC_CADENA ASIG_CADENA ) PUNTO_COMA ", true, identProd);
 
-        gramatica.group("DEC_CHAR", "DATO_CARACTER IDENTIFICADOR");
-        gramatica.group("ASIG_CHAR", "ASIGNACION_IGUAL CARACTER");
-        gramatica.group("VAR_CHAR", "(IDENTIFICADOR ASIG_CHAR| DEC_CHAR| DEC_CHAR ASIG_CHAR ) PUNTO_COMA ");
+        gramatica.group("ASIG_CHAR", "ASIGNACION_IGUAL CARACTER", identProd);
+        gramatica.group("VAR_CHAR", "(IDENTIFICADOR ASIG_CHAR| DEC_CHAR| DEC_CHAR ASIG_CHAR ) PUNTO_COMA ", true, identProd);
 
         /// ====================== ERRORES SEMANTICOS
-        gramatica.group("ERR_VAR_ENTERO", "(DEC_ENTERO (ASIG_FLOTANTE | ASIG_CADENA |ASIG_BOOL)) (PUNTO_COMA)? ", true,
+        gramatica.group("ERR_VAR_ENTERO", "(DEC_ENTERO (ASIG_FLOTANTE | ASIG_CADENA |ASIG_BOOL | ASIG_CHAR)) (PUNTO_COMA)? ", true,
                 30, "Error Semantico {}: asignacion invalida a un tipo entero [# , %]");
 
-        /// ====================== ERRORES SINTACTICOS 
-        gramatica.group("ERR_EXP_RELACIONAL", "PARENTESIS_A EXP_RELACIONAL  ", true,
-                6, "Error sintáctico {}: falta cierre de paréntesis en expresión relacional [# , %]");
-        gramatica.delete("ERR_EXP_RELACIONAL", 9, " Error {}: Expresión relacional no esta declarada correctamente [# , %]");
-        gramatica.group("ERR_VAR_ENTERO", " (IDENTIFICADOR ASIG_ENTERO) | DEC_ENTERO | (DEC_ENTERO ASIG_ENTERO)", true,
-                8, "Error {}: Falta punto y coma en declaracion  [# , %]");
-        //gramatica.group("ERR_VAR_ENTERO", "(ASIG_ENTERO PUNTO_COMA)| ASIG_ENTERO ", true, 9, "Error {}: Falta decarar  [# , %]");
-        gramatica.group("ERR_VAR_ENTERO", "(IDENTIFICADOR ) PUNTO_COMA ", true,
-                7, "Error {}: Falta asignación o tipo de dato [# , %]");
-        gramatica.delete("ERR_VAR_ENTERO", 10, " × Error sintáctico {}: La variable entera no está declarada correctamente [#, %]");
-        
-//        
-        gramatica.group("ERR_VAR_FLOTANTE", " IDENTIFICADOR ASIG_FLOTANTE | DEC_FLOTANTE | DEC_FLOTANTE ASIG_FLOTANTE ", true,
-                11, "Error {}: Falta punto y coma en declaracion  [# , %]");
-        //gramatica.group("ERR_VAR_FLOTANTE", "(ASIG_FLOTANTE PUNTO_COMA)| ASIG_FLOTANTE ", true,12, "Error {}: Falta decarar  [# , %]");
-        gramatica.group("ERR_VAR_FLOTANTE", "(IDENTIFICADOR ) PUNTO_COMA ", true,
-                13, "Error {}: Falta asignación o tipo de dato [# , %]");
-        gramatica.delete("ERR_VAR_FLOTANTE", 14, " × Error sintáctico {}: La variable flotante no está declarada correctamente [#, %]");
+        gramatica.group("ERR_VAR_FLOTANTE", "(DEC_FLOTANTE (ASIG_CHAR | ASIG_CADENA |ASIG_BOOL)) (PUNTO_COMA)? ", true,
+                31, "Error Semantico {}: asignacion invalida a un tipo flotante [# , %]");
 
-        gramatica.group("ERR_VAR_BOOL", " IDENTIFICADOR ASIG_BOOL | DEC_BOOL | DEC_BOOL ASIG_BOOL ", true,
-                15, "Error {}: Falta punto y coma en declaracion  [# , %]");
-        //gramatica.group("ERR_VAR_BOOL", "(ASIG_BOOL PUNTO_COMA)| ASIG_BOOL ", true,16, "Error {}: Falta decarar  [# , %]");
-        gramatica.group("ERR_VAR_BOOL", "(IDENTIFICADOR ) PUNTO_COMA ", true,
-                17, "Error {}: Falta asignación o tipo de dato [# , %]");
-        gramatica.delete("ERR_VAR_BOOL", 18, " × Error sintáctico {}: La variable booleana no está declarada correctamente [#, %]");
+        gramatica.group("ERR_VAR_BOOL", "(DEC_BOOL (ASIG_ENTERO | ASIG_CADENA |ASIG_FLOTANTE | ASIG_CHAR)) (PUNTO_COMA)? ", true,
+                32, "Error Semantico {}: asignacion invalida a un tipo booleano [# , %]");
 
-        gramatica.group("ERR_VAR_CADENA", " IDENTIFICADOR ASIG_CADENA | DEC_CADENA | DEC_CADENA ASIG_CADENA ", true,
-                19, "Error {}: Falta punto y coma en declaracion  [# , %]");
-        //gramatica.group("ERR_VAR_CADENA", "(ASIG_CADENA PUNTO_COMA)| ASIG_CADENA ", true,20, "Error {}: Falta decarar  [# , %]");
-        gramatica.group("ERR_VAR_CADENA", "(IDENTIFICADOR ) CADENA ", true,
-                21, "Error {}: Falta asignación o tipo de dato [# , %]");
-        gramatica.delete("ERR_VAR_CADENA", 22, " × Error sintáctico {}: La variable cadena no está declarada correctamente [#, %]");
+        gramatica.group("ERR_VAR_CHAR", "(DEC_CHAR (ASIG_ENTERO | ASIG_CADENA |ASIG_FLOTANTE | ASIG_BOOL)) (PUNTO_COMA)? ", true,
+                33, "Error Semantico {}: asignacion invalida a un tipo character [# , %]");
 
-        gramatica.group("ERR_VAR_CHAR", " IDENTIFICADOR ASIG_CHAR | DEC_CHAR | DEC_CHAR ASIG_CHAR ", true,
-                23, "Error {}: Falta punto y coma en declaracion  [# , %]");
-        //        gramatica.group("ERR_VAR_CHAR", "(ASIG_CHAR PUNTO_COMA)| ASIG_CHAR ", true,24, "Error {}: Falta decarar  [# , %]");
-        gramatica.group("ERR_VAR_CHAR", "(IDENTIFICADOR ) CHAR ", true,
-                25, "Error {}: Falta asignación o tipo de dato [# , %]");
-        gramatica.delete("ERR_VAR_CHAR", 26, " × Error sintáctico {}: La variable carácter no está declarada correctamente [#, %]");
+        gramatica.group("ERR_VAR_CADENA", "(DEC_CADENA (ASIG_ENTERO | ASIG_CHAR |ASIG_FLOTANTE | ASIG_BOOL)) (PUNTO_COMA)? ", true,
+                34, "Error Semantico {}: asignacion invalida a un tipo cadena [# , %]");
 
         // Definir System.out.println
         gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C PUNTO_COMA");
@@ -440,8 +415,6 @@ public class Compilador extends javax.swing.JFrame {
 
         gramatica.group("POS", "(IDENTIFICADOR DECREMENTAL) | (IDENTIFICADOR INCREMENTAL)");
         gramatica.group("PRE", "(INCREMENTAL IDENTIFICADOR) | (DECREMENTAL IDENTIFICADOR)");
-        
-        
 
         gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)* LLAVE_C");
 //        gramatica.group("BLOQUE", "(CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)");
@@ -462,32 +435,157 @@ public class Compilador extends javax.swing.JFrame {
 
         gramatica.group("BUCLE_WHILE", "WHILE   BLOQUE", true,
                 4, "Error sintáctico: falta declaración de while [# , %]");
-        
+
         //Bucle For
         gramatica.group("BUCLE_FOR", "FOR PARENTESIS_A  VAR_ENTERO "
                 + " EXP_RELACIONAL PUNTO_COMA (POS | PRE) PARENTESIS_C BLOQUE ");
-        
+
         //funcion main
         gramatica.group("STRING_ARR", "DATO_CADENA CORCHETE_A CORCHETE_C");
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
                 + " PARENTESIS_A STRING_ARR IDENTIFICADOR PARENTESIS_C BLOQUE ");
-        
-        //funcion
-        
-        //funcion estatica
-        
-        
 
+        //funcion normal
+        gramatica.loopForFunExecUntilChangeNotDetected(() -> {
+            gramatica.group("PARAMETROS", "PARENTESIS_A (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR ) "
+                    + "( (COMA) (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR))* PARENTESIS_C");
+        });
+
+        gramatica.group("FUNCION_PARAMS", "PUBLIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+                + " PARAMETROS BLOQUE ");
+        gramatica.group("FUNCION_NOPARAMS", "PUBLIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+                + " PARENTESIS_A PARENTESIS_C BLOQUE ");
+
+        //funcion estatica
+        gramatica.group("FUNCION_EST_PARAMS", "PUBLIC STATIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+                + " PARAMETROS BLOQUE ");
+        gramatica.group("FUNCION_EST_NOPARAMS", "PUBLIC STATIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+                + " PARENTESIS_A PARENTESIS_C BLOQUE ");
+
+        //constructor
+        gramatica.group("FUNCION_CONST_PARAMS", " PUBLIC IDENTIFICADOR PARAMETROS BLOQUE ");
+        gramatica.group("FUNCION_CONST_NOPARAMS", "PUBLIC IDENTIFICADOR PARENTESIS_A PARENTESIS_C BLOQUE ");
+
+        //clases
+        gramatica.group("BLOQUE_CLASE", " LLAVE_A ( FUNCION_MAIN | FUNCION_PARAMS | FUNCION_NOPARAMS | "
+                + "FUNCION_EST_PARAMS | FUNCION_EST_NOPARAMS | FUNCION_CONST_PARAMS |FUNCION_CONST_NOPARAMS)+ LLAVE_C ");
+        gramatica.group("CLASE", " PUBLIC CLASS IDENTIFICADOR BLOQUE_CLASE");
+
+        /// ====================== ERRORES SINTACTICOS 
+        gramatica.group("ERR_EXP_RELACIONAL", "PARENTESIS_A EXP_RELACIONAL  ", true,
+                6, "Error sintáctico {}: falta cierre de paréntesis en expresión relacional [# , %]");
+        gramatica.delete("ERR_EXP_RELACIONAL", 9, " Error {}: Expresión relacional no esta declarada correctamente [# , %]");
+
+        gramatica.group("VAR_ENTERO", " (IDENTIFICADOR ASIG_ENTERO) | DEC_ENTERO | (DEC_ENTERO ASIG_ENTERO)", true,
+                8, "Error {}: Falta punto y coma en declaracion  [# , %]");
+        //gramatica.group("ERR_VAR_ENTERO", "(ASIG_ENTERO PUNTO_COMA)| ASIG_ENTERO ", true, 9, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("VAR_ENTERO", "(IDENTIFICADOR ) PUNTO_COMA ", true,
+                7, "Error {}: Falta asignación o tipo de dato [# , %]");
+//        gramatica.delete("VAR_ENTERO", 10, " × Error sintáctico {}: La variable entera no está declarada correctamente [#, %]");
+
+        gramatica.group("VAR_FLOTANTE", " IDENTIFICADOR ASIG_FLOTANTE | DEC_FLOTANTE | DEC_FLOTANTE ASIG_FLOTANTE ", true,
+                11, "Error {}: Falta punto y coma en declaracion  [# , %]");
+        //gramatica.group("ERR_VAR_FLOTANTE", "(ASIG_FLOTANTE PUNTO_COMA)| ASIG_FLOTANTE ", true,12, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("VAR_FLOTANTE", "(IDENTIFICADOR ) PUNTO_COMA ", true,
+                13, "Error {}: Falta asignación o tipo de dato [# , %]");
+//        gramatica.delete("VAR_FLOTANTE", 14, " × Error sintáctico {}: La variable flotante no está declarada correctamente [#, %]");
+
+        gramatica.group("VAR_BOOL", " IDENTIFICADOR ASIG_BOOL | DEC_BOOL | DEC_BOOL ASIG_BOOL ", true,
+                15, "Error {}: Falta punto y coma en declaracion  [# , %]");
+        //gramatica.group("ERR_VAR_BOOL", "(ASIG_BOOL PUNTO_COMA)| ASIG_BOOL ", true,16, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("VAR_BOOL", "(IDENTIFICADOR ) PUNTO_COMA ", true,
+                17, "Error {}: Falta asignación o tipo de dato [# , %]");
+//        gramatica.delete("VAR_BOOL", 18, " × Error sintáctico {}: La variable booleana no está declarada correctamente [#, %]");
+
+        gramatica.group("VAR_CADENA", " IDENTIFICADOR ASIG_CADENA | DEC_CADENA | DEC_CADENA ASIG_CADENA ", true,
+                19, "Error {}: Falta punto y coma en declaracion  [# , %]");
+        //gramatica.group("ERR_VAR_CADENA", "(ASIG_CADENA PUNTO_COMA)| ASIG_CADENA ", true,20, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("VAR_CADENA", "(IDENTIFICADOR ) CADENA ", true,
+                21, "Error {}: Falta asignación o tipo de dato [# , %]");
+//        gramatica.delete("VAR_CADENA", 22, " × Error sintáctico {}: La variable cadena no está declarada correctamente [#, %]");
+
+        gramatica.group("VAR_CHAR", " IDENTIFICADOR ASIG_CHAR | DEC_CHAR | DEC_CHAR ASIG_CHAR ", true,
+                23, "Error {}: Falta punto y coma en declaracion  [# , %]");
+        //        gramatica.group("ERR_VAR_CHAR", "(ASIG_CHAR PUNTO_COMA)| ASIG_CHAR ", true,24, "Error {}: Falta decarar  [# , %]");
+        gramatica.group("VAR_CHAR", "(IDENTIFICADOR ) CHAR ", true,
+                25, "Error {}: Falta asignación o tipo de dato [# , %]");
+//        gramatica.delete("VAR_CHAR", 26, " × Error sintáctico {}: La variable carácter no está declarada correctamente [#, %]");
+
+        System.out.println("Console.log('imprimiendo producciones'");
         gramatica.show();
+
     }
-    
-    
 
     private void semanticAnalysis() {
-        System.out.println("Metodo de analisis Semantico");
-        for (Production id : identProd) {
-            System.out.println(id.lexemeRank(0, -1));
-            System.out.println(id.lexicalCompRank(0, -1));
+        System.out.println("Analisis Semantico");
+        HashMap<String, String> declaredVariables = new HashMap<>();
+        
+//        for(Production production: identProd){
+//            System.out.println("Producción: " + production);
+//            for (int i = 0; i < production.getSizeTokens(); i++) {
+//                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
+//            }
+//        }
+        
+        //conocer si la variable esta anteriormente declarada y conocer si se le asigna un dato de tipo compatible
+        for (Production production : identProd) {
+            String productionName = production.getName();
+            System.out.println("\nproductionName = " + productionName);
+            System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
+            System.out.println("Estructura: "+production.lexicalCompRank(0, -1));
+
+            // Manejo de declaraciones
+            if (productionName.startsWith("DEC_")) {
+                System.out.println("DECLARACIONES ");
+                String varName = production.lexemeRank(1); // El nombre del identificador
+                System.out.println("varName = " + varName);
+                String varType = productionName.substring(4); // Extraer el tipo del nombre de la producción (ej. "ENTERO", "FLOTANTE")
+                System.out.println("varType = " + varType);
+                if (declaredVariables.containsKey(varName)) {
+                    // Error: Variable ya declarada
+                    errors.add(new ErrorLSSL(1, " × Error semántico {}: variable ya declarada [#, %]", production, true));
+                } else {
+                    // Registrar la variable
+                    declaredVariables.put(varName, varType);
+                }
+            } // Manejo de asignaciones
+            else if (productionName.startsWith("VAR_") && !production.lexicalCompRank(0).startsWith("DATO_")) {
+                System.out.println("ASIGNACIONES");
+                String varName = production.lexemeRank(0); // El identificador usado en la asignación
+                System.out.println("varName = " + varName);
+                if (!declaredVariables.containsKey(varName)) {
+                    // Error: Variable no declarada
+                    errors.add(new ErrorLSSL(2, " × Error semántico {}: variable no declarada antes de ser usada [#, %]", production, true));
+                } else {
+                    // Verificar compatibilidad de tipos (opcional)
+                    String expectedType = declaredVariables.get(varName);
+                    System.out.println("expectedType = " + expectedType);
+                    String assignedValueType = production.lexicalCompRank(production.getSizeTokens() -2); // Último componente léxico
+                    System.out.println("assignedValueType = " + assignedValueType);
+                    if (!isCompatibleType(expectedType, assignedValueType)) {
+                        errors.add(new ErrorLSSL(3, " × Error semántico {}: asignación incompatible con el tipo de dato [#, %]", production, true));
+                    }
+                }
+            }
+        }
+    }
+
+    // Método auxiliar para verificar compatibilidad de tipos
+    private boolean isCompatibleType(String expectedType, String assignedType) {
+        // Ejemplo simple de compatibilidad
+        switch (expectedType) {
+            case "ENTERO":
+                return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("IDENTIFICADOR");
+            case "FLOTANTE":
+                return assignedType.equals("NUMERO_FLOTANTE") ;
+            case "CHAR":
+                return assignedType.equals("CARACTER") ;
+            case "BOOL":
+                return assignedType.equals("TRUE") || assignedType.equals("FALSE");
+            case "CADENA":
+                return assignedType.equals("CADENA_TEXTO") ;
+            default:
+                return false;
         }
     }
 
