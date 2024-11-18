@@ -46,15 +46,78 @@ boolean
 String
     { return token(yytext(), "DATO_CADENA", yyline, yycolumn); }
 
+
+
 true
     { return token(yytext(), "TRUE", yyline, yycolumn); }
 false
     { return token(yytext(), "FALSE", yyline, yycolumn); }
 
-/*PALABRAS CLAVE*/
-class | public | private | protected | static | final | void | return 
-      | new | switch | case | break | continue |new
-      { return token(yytext(), "PALABRA_RESERVADA", yyline, yycolumn); }
+Class 
+    { return token(yytext(), "CLASS", yyline, yycolumn); }
+
+public 
+    { return token(yytext(), "PUBLIC", yyline, yycolumn); }
+
+private 
+    { return token(yytext(), "PRIVATE", yyline, yycolumn); }
+
+protected 
+    { return token(yytext(), "PROTECTED", yyline, yycolumn); }
+
+static 
+    { return token(yytext(), "STATIC", yyline, yycolumn); }
+
+final 
+    { return token(yytext(), "FINAL", yyline, yycolumn); }
+
+void 
+    { return token(yytext(), "VOID", yyline, yycolumn); }
+
+return 
+    { return token(yytext(), "RETURN", yyline, yycolumn); }
+
+new 
+    { return token(yytext(), "NEW", yyline, yycolumn); }
+
+switch 
+    { return token(yytext(), "SWITCH", yyline, yycolumn); }
+
+case 
+    { return token(yytext(), "CASE", yyline, yycolumn); }
+
+break 
+    { return token(yytext(), "BREAK", yyline, yycolumn); }
+
+continue 
+    { return token(yytext(), "CONTINUE", yyline, yycolumn); }
+
+
+
+
+String[] 
+    { return token(yytext(), "STRING[]", yyline, yycolumn); }
+
+int[] 
+    { return token(yytext(), "INT[]", yyline, yycolumn); }
+
+float[] 
+    { return token(yytext(), "FLOAT[]", yyline, yycolumn); }
+
+double[] 
+    { return token(yytext(), "DOUBLE[]", yyline, yycolumn); }
+
+char[] 
+    { return token(yytext(), "CHAR[]", yyline, yycolumn); }
+
+boolean[] 
+    { return token(yytext(), "BOOLEAN[]", yyline, yycolumn); }
+
+main
+    { return token(yytext(), "MAIN", yyline, yycolumn); }
+
+
+
 "System" 
     { return token(yytext(), "SYSTEM", yyline, yycolumn); }
 "println" 
@@ -123,8 +186,6 @@ class | public | private | protected | static | final | void | return
 "," 
     { return token(yytext(), "COMA", yyline, yycolumn); }
 
-
-(int|float|double|char|boolean|byte|short|String|long)\[\]   {return token(yytext(),  "ARRAY_TYPE",  yyline, yycolumn); }
 
 /*NÚMEROS ENTEROS*/
 [0-9]+ { return token(yytext(), "NUMERO_ENTERO", yyline, yycolumn); }
