@@ -468,8 +468,13 @@ public class Compilador extends javax.swing.JFrame {
                 + " EXP_RELACIONAL PUNTO_COMA (POS | PRE) PARENTESIS_C BLOQUE ");
         
         //funcion main
+        gramatica.group("STRING_ARR", "DATO_CADENA CORCHETE_A CORCHETE_C");
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
-                + " PARENTESIS_A STRING[] IDENTIFICADOR PARENTESIS_C BLOQUE ");
+                + " PARENTESIS_A STRING_ARR IDENTIFICADOR PARENTESIS_C BLOQUE ");
+        
+        //funcion
+        
+        //funcion estatica
         
         
 

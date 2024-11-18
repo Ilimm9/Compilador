@@ -92,27 +92,6 @@ break
 continue 
     { return token(yytext(), "CONTINUE", yyline, yycolumn); }
 
-
-
-
-String[] 
-    { return token(yytext(), "STRING[]", yyline, yycolumn); }
-
-int[] 
-    { return token(yytext(), "INT[]", yyline, yycolumn); }
-
-float[] 
-    { return token(yytext(), "FLOAT[]", yyline, yycolumn); }
-
-double[] 
-    { return token(yytext(), "DOUBLE[]", yyline, yycolumn); }
-
-char[] 
-    { return token(yytext(), "CHAR[]", yyline, yycolumn); }
-
-boolean[] 
-    { return token(yytext(), "BOOLEAN[]", yyline, yycolumn); }
-
 main
     { return token(yytext(), "MAIN", yyline, yycolumn); }
 
