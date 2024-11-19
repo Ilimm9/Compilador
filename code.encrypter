@@ -1,12 +1,10 @@
-int valor;
-double valor2;
-char valor3;
-String valor4;
-boolean valor5;
 
 
-valor = 3;
-valor2 = 3.3;
-valor3 = 'a';
-valor4 = "HolaMundo";
-valor5 =true;
+
+public int sumar(){
+}
+
+public void sumar(){
+}
+
+
