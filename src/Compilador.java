@@ -418,7 +418,7 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("POS", "(IDENTIFICADOR DECREMENTAL) | (IDENTIFICADOR INCREMENTAL)");
         gramatica.group("PRE", "(INCREMENTAL IDENTIFICADOR) | (DECREMENTAL IDENTIFICADOR)");
 
-        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)* LLAVE_C");
+        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC)* LLAVE_C");
 //        gramatica.group("BLOQUE", "(CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)");
 
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
@@ -444,8 +444,9 @@ public class Compilador extends javax.swing.JFrame {
 
         //funcion main
         gramatica.group("STRING_ARR", "DATO_CADENA CORCHETE_A CORCHETE_C");
+
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
-                + " PARENTESIS_A STRING_ARR IDENTIFICADOR PARENTESIS_C BLOQUE ");
+                + " PARENTESIS_A STRING_ARR IDENTIFICADOR PARENTESIS_C BLOQUE ", true, identProd);
 
         //funcion normal
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
@@ -474,7 +475,8 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("CLASE", " PUBLIC CLASS IDENTIFICADOR BLOQUE_CLASE", true, identProd);
 
         //llamada a funciones
-        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( IDENTIFICADOR (COMA IDENTIFICADOR)*)? PARENTESIS_C PUNTO_COMA", true, identProd);
+        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
+                + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
 
         /// ====================== ERRORES SINTACTICOS 
         gramatica.group("ERR_EXP_RELACIONAL", "PARENTESIS_A EXP_RELACIONAL  ", true,
@@ -520,56 +522,9 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.show();
 
     }
-    
-    private void registrarFunciones() {
-        for (Production p : identProd) {
-            if (p.getName().startsWith("FUNCION_")) {
-                String nombreFuncion = p.lexemeRank(2); // Nombre de la función
-                boolean esEstatica = p.getName().contains("EST");
-                funciones.put(nombreFuncion, esEstatica);
-            }
-        }
-    }
-    
-    private void validarLlamadasAFunciones() {
-        for (Production p : identProd) {
-            if (p.getName().equals("CALL_FUNC")) {
-                String nombreFuncion = p.lexemeRank(0); // Nombre de la función llamada
-                boolean enContextoEstatico = isStaticContext(p); // Implementar esta función
-
-                if (!funciones.containsKey(nombreFuncion)) {
-                    // Error: La función no existe
-                    errors.add(new ErrorLSSL(1, "Error semántico: La función '" + nombreFuncion + "' no está declarada.", p, true));
-                } else if (enContextoEstatico && !funciones.get(nombreFuncion)) {
-                    // Error: Llamada a función no estática desde contexto estático
-                    errors.add(new ErrorLSSL(2, "Error semántico: La función '" + nombreFuncion + "' no es estática y no puede ser llamada desde un contexto estático.", p, true));
-                }
-            }
-        }
-    }
-    
-    private boolean isStaticContext(Production p) {
-        Production parent = findParentProduction(p, "FUNCION_EST_PARAMS", "FUNCION_EST_NOPARAMS");
-        return parent != null; // Si el ancestro es una función estática
-    }
-
-    private Production findParentProduction(Production p, String... parentNames) {
-//        Production current = p.();
-//        while (current != null) {
-//            for (String name : parentNames) {
-//                if (current.getName().equals(name)) {
-//                    return current;
-//                }
-//            }
-//            current = current.getParent();
-//        }
-//        return null; // No se encontró un ancestro estático
-return null;
-    }
 
     private void semanticAnalysis() {
         System.out.println("Analisis Semantico");
-        HashMap<String, String> declaredVariables = new HashMap<>();
 
 //        for(Production production: identProd){
 //            System.out.println("Producción: " + production);
@@ -577,6 +532,7 @@ return null;
 //                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
 //            }
 //        }
+        HashMap<String, String> declaredVariables = new HashMap<>();
         //conocer si la variable esta anteriormente declarada y conocer si se le asigna un dato de tipo compatible
         for (Production production : identProd) {
             String productionName = production.getName();
@@ -633,13 +589,13 @@ return null;
             System.out.println("\nproductionName = " + productionName);
             System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
             System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-            
+
             if (productionName.startsWith("FUNCION_NOPARAMS")) {
                 String functionName = production.lexemeRank(2); // Asumiendo que el nombre de la función está en el índice 2
                 System.out.println("functionName = " + functionName);
                 String returnType = production.lexicalCompRank(1); // Tipo de retorno después de 'PUBLIC' y opcionalmente 'STATIC'
                 System.out.println("returnType = " + returnType);
-                
+
                 if (declaredFunctions.containsKey(functionName)) {
                     // Error: Variable ya declarada
                     errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion ya declarada [#, %]", production, true));
@@ -647,73 +603,114 @@ return null;
                     // Registrar la variable
                     declaredFunctions.put(functionName, returnType); // Guarda la función
                 }
-                
-                
-            } else if (productionName.equals("CALL_FUNC")) {
+
+            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() == 4) {
                 String functionName = production.lexemeRank(0); // Nombre de la función llamada
                 System.out.println("functionName = " + functionName);
                 if (!declaredFunctions.containsKey(functionName)) {
                     errors.add(new ErrorLSSL(5, " × Error semántico {}: la función '" + functionName + "' no está declarada [#, %]", production, true));
                 }
             }
-            
+
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+        System.out.println("\n\n=======Verificacion ahora de Funciones CON PARAMETROS ");
         HashMap<String, List<String>> functionParams = new HashMap<>();
 
-//        for (Production production : identProd) {
-//            String productionName = production.getName();
-//
-//            if (productionName.startsWith("FUNCION")) {
-//                System.out.println("\nproductionName = " + productionName);
-//                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-//                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-//
-//                String functionName = production.lexemeRank(2); // Asumiendo que el nombre de la función está en el índice 1
-//                System.out.println("functionName = " + functionName);
-//                String returnType = production.lexicalCompRank(1); // Tipo de retorno después de 'PUBLIC' y opcionalmente 'STATIC'
-//                System.out.println("returnType = " + returnType);
-//                List<String> params = new ArrayList<>();
-//                for (int i = 3; i < production.getSizeTokens() - 2; i++) { // Asumiendo que los parámetros comienzan en el índice 3
-//                    params.add(production.lexicalCompRank(i)); // Agrega cada tipo de parámetro
-//                }
-//                functionParams.put(functionName, params);
-//                System.out.println(params);
-//
-//            } else if (productionName.equals("CALL_FUNC")) {
-//
-//                System.out.println("\nproductionName = " + productionName);
-//                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-//                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-//
-//                String functionName = production.lexemeRank(0);
-//                if (functionParams.containsKey(functionName)) {
-//                    List<String> expectedParams = functionParams.get(functionName);
-//                    System.out.println("expectedParams = " + expectedParams);
-//                    List<String> actualParams = new ArrayList<>();
-//                    System.out.println("actualParams = " + actualParams);
-//                    for (int i = 2; i < production.getSizeTokens() - 1; i++) { // Parámetros reales
-//                        actualParams.add(production.lexicalCompRank(i));
-//                    }
-//                    if (!expectedParams.equals(actualParams)) {
-//                        errors.add(new ErrorLSSL(6, " × Error semántico {}: parámetros no coinciden para la función '" + functionName + "' [#, %]", production, true));
-//                    }
-//                }
-//            }
-//
-//        }
+        // Validación de funciones con parámetros
+        for (Production production : identProd) {
+            String productionName = production.getName();
 
+            // Declaración de funciones con parámetros
+            if (productionName.startsWith("FUNCION_PARAMS")) {
+                String functionName = production.lexemeRank(2); // Nombre de la función
+                System.out.println(functionName);
+                List<String> paramTypes = new ArrayList<>();
+
+                // Extraer y validar los parámetros (tipo y nombre)
+                for (int i = 4; i < production.getSizeTokens() - 2; i += 2) {
+                    if (production.lexicalCompRank(i).equals("PARENTESIS_C")) {
+                        break;
+                    }
+                    if (production.lexicalCompRank(i).equals("COMA")) {
+                        i--;
+                        continue;
+                    }
+                    String paramType = production.lexicalCompRank(i);  // Tipo de dato
+                    paramType = paramType.substring(5);
+//identificar que este dentro de los parentesis, posteriormente identificar que sea un tipo de dato seguido de nombre 
+                    String paramName = production.lexemeRank(i + 1);  // Nombre del parámetro
+
+                    // Agregar el parámetro si es válido
+                    paramTypes.add(paramType);
+                }
+
+                functionParams.put(functionName, paramTypes); // Registrar parámetros
+                System.out.println("Function '" + functionName + "' declared with parameters: " + paramTypes);
+            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() > 4) {
+
+                String functionName = production.lexemeRank(0); // Nombre de la función
+
+                if (functionParams.get(functionName) == null) {
+                    // Error: Variable ya declarada
+                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion NO declarada [#, %]", production, true));
+                    break;
+                }
+
+                // Validar los parámetros
+                List<String> expectedParams = functionParams.get(functionName);
+
+                List<String> actualParams = new ArrayList<>();
+                List<String> nombreParams = new ArrayList<>();
+
+                // Extraer los tipos de parámetros pasados en la llamada
+                for (int i = 2; i < production.getSizeTokens() - 2; i += 2) { // Asumiendo que los parámetros están en índices impares
+                    actualParams.add(production.lexicalCompRank(i));
+                    nombreParams.add(production.lexemeRank(i));
+
+                }
+
+                System.out.println("Esperados" + expectedParams + "\nactuales" + actualParams);
+                System.out.println("actualParams = " + actualParams);
+
+                // Comparar cantidad de parámetros
+                if (expectedParams.size() != actualParams.size()) {
+                    errors.add(new ErrorLSSL(
+                            6,
+                            "× Error semántico: la función '" + functionName + "' esperaba " + expectedParams.size()
+                            + " parámetros, pero se encontraron " + actualParams.size() + ". Revisa la cantidad de argumentos proporcionados.",
+                            production,
+                            true
+                    ));
+                    continue;
+                }
+
+                // Comparar tipos de parámetros
+                for (int i = 0; i < expectedParams.size(); i++) {
+                    System.out.println("----------" + actualParams.get(i));
+                    System.out.println("----------" + expectedParams.get(i));
+                    if (!isCompatibleType(expectedParams.get(i), actualParams.get(i), nombreParams.get(i), production, declaredVariables)) {
+                        errors.add(new ErrorLSSL(
+                                7,
+                                "× Error semántico: el parámetro " + (i + 1) + " de la función '" + functionName
+                                + "' esperaba un valor de tipo '" + expectedParams.get(i) + "', pero se proporcionó un valor de tipo '"
+                                + actualParams.get(i) + "'. Corrige el tipo de dato del argumento.",
+                                production,
+                                true
+                        ));
+                    }
+                }
+                if (production.getSizeTokens() < expectedParams.size()) {
+                    errors.add(new ErrorLSSL(
+                            8,
+                            "× Error semántico: producción malformada para '" + productionName + "'. Verifica que la definición de la función o su llamada sea correcta.",
+                            production,
+                            true
+                    ));
+                    continue;
+                }
+            }
+        }
     }
 
     // Método auxiliar para verificar compatibilidad de tipos
@@ -723,13 +720,38 @@ return null;
             case "ENTERO":
                 return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("IDENTIFICADOR");
             case "FLOTANTE":
-                return assignedType.equals("NUMERO_FLOTANTE");
+                return assignedType.equals("NUMERO_FLOTANTE") || assignedType.equals("IDENTIFICADOR");
             case "CHAR":
-                return assignedType.equals("CARACTER");
+                return assignedType.equals("CARACTER") || assignedType.equals("IDENTIFICADOR");
             case "BOOL":
-                return assignedType.equals("TRUE") || assignedType.equals("FALSE");
+                return assignedType.equals("TRUE") || assignedType.equals("FALSE") || assignedType.equals("IDENTIFICADOR");
             case "CADENA":
-                return assignedType.equals("CADENA_TEXTO");
+                return assignedType.equals("CADENA_TEXTO") || assignedType.equals("IDENTIFICADOR");
+            default:
+                return false;
+        }
+    }
+
+    private boolean isCompatibleType(String expectedType, String assignedType, String nombreParam, Production production, HashMap<String, String> declaredVariables) {
+        // Ejemplo simple de compatibilidad
+        if (assignedType.equals("IDENTIFICADOR")) {
+            if (!declaredVariables.containsKey(nombreParam)) {
+                // Error: Variable no declarada
+                errors.add(new ErrorLSSL(9, " × Error semántico {}: variable '" + nombreParam + "' no declarada antes de ser usada [#, %]", production,
+                        true));
+            }
+        }
+        switch (expectedType) {
+            case "ENTERO":
+                return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("IDENTIFICADOR");
+            case "FLOTANTE":
+                return assignedType.equals("NUMERO_FLOTANTE") || assignedType.equals("IDENTIFICADOR");
+            case "CHAR":
+                return assignedType.equals("CARACTER") || assignedType.equals("IDENTIFICADOR");
+            case "BOOL":
+                return assignedType.equals("TRUE") || assignedType.equals("FALSE") || assignedType.equals("IDENTIFICADOR");
+            case "CADENA":
+                return assignedType.equals("CADENA_TEXTO") || assignedType.equals("IDENTIFICADOR");
             default:
                 return false;
         }
