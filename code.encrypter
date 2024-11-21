@@ -1,19 +1,5 @@
-public class Principal{
-    public void sumar(int valor1, int valor2){
-    }
-
-
-   public  int sumar(double y){
-    int x=3;
-return 3+2.7;
-   }
-
-   public static void main(String[] args){
-int valor=3;
-b=5;
-
-sumar(a,2);
-
-   }
-
+public static void sumar(){}
+public static void main(String[] args){
+sumar();
 }
+
