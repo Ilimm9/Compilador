@@ -8,6 +8,12 @@ import compilerTools.Grammar;
 import compilerTools.Production;
 import compilerTools.TextColor;
 import compilerTools.Token;
+import estructura.Estructura;
+import estructura.FuncionEstatica;
+import estructura.FuncionMain;
+import estructura.FuncionNoEstatica;
+import estructura.LlamadaFuncion;
+import estructura.Variable;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -43,6 +49,7 @@ public class Compilador extends javax.swing.JFrame {
     private HashMap<String, String> identificadores;
     private boolean codeHasBeenCompiled = false;
     private HashMap<String, Boolean> funciones; // Nombre de la función y si es estática
+    private List<String> mensajesErroneos;
 
     /**
      * Creates new form Compilador
@@ -74,6 +81,7 @@ public class Compilador extends javax.swing.JFrame {
         });
         tokens = new ArrayList<>();
         errors = new ArrayList<>();
+        mensajesErroneos = new ArrayList<>();
         textsColor = new ArrayList<>();
         identProd = new ArrayList<>();
         identificadores = new HashMap<>();
@@ -298,7 +306,7 @@ public class Compilador extends javax.swing.JFrame {
     private void btnEjecutarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEjecutarActionPerformed
         btnCompilar.doClick();
         if (codeHasBeenCompiled) {
-            if (!errors.isEmpty()) {
+            if (!errors.isEmpty() && !mensajesErroneos.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "No se puede ejecutar el código ya que se encontró uno o más errores",
                         "Error en la compilación", JOptionPane.ERROR_MESSAGE);
             } else {
@@ -379,6 +387,8 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("DEC_CADENA", "DATO_CADENA IDENTIFICADOR", true, identProd);
         gramatica.group("DEC_CHAR", "DATO_CARACTER IDENTIFICADOR", true, identProd);
 
+        gramatica.group("FUNCION", "(DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR ) PARENTESIS_A", true, identProd);
+
         gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL (NUMERO_ENTERO | IDENTIFICADOR | EXP_ARITMETICA )", true, identProd);
         gramatica.group("VAR_ENTERO", "(IDENTIFICADOR ASIG_ENTERO| DEC_ENTERO ASIG_ENTERO | DEC_ENTERO ) PUNTO_COMA ", true, identProd);
 
@@ -418,6 +428,9 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("POS", "(IDENTIFICADOR DECREMENTAL) | (IDENTIFICADOR INCREMENTAL)");
         gramatica.group("PRE", "(INCREMENTAL IDENTIFICADOR) | (DECREMENTAL IDENTIFICADOR)");
 
+        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
+                + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
+
         gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC)* LLAVE_C");
 //        gramatica.group("BLOQUE", "(CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)");
 
@@ -444,74 +457,97 @@ public class Compilador extends javax.swing.JFrame {
 
         //funcion main
         gramatica.group("STRING_ARR", "DATO_CADENA CORCHETE_A CORCHETE_C");
+        
+        
 
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
                 + " PARENTESIS_A STRING_ARR IDENTIFICADOR PARENTESIS_C BLOQUE ", true, identProd);
 
         //funcion normal
+        gramatica.group("BLOQUE_RETORNO", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC)* "
+                + " RETURN (NUMERO_ENTERO| CADENA_TEXTO | NUMERO_FLOTANTE | TRUE | FALSE | IDENTIFICADOR) PUNTO_COMA LLAVE_C");
+
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             gramatica.group("PARAMETROS", "PARENTESIS_A (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR ) "
                     + "( (COMA) (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR))* PARENTESIS_C", true, identProd);
+
+            gramatica.group("PARAMETROS", "(DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR ) "
+                    + "( (COMA) (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR))* PARENTESIS_C", true, identProd);
+
         });
-
-        gramatica.group("FUNCION_PARAMS", "PUBLIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
-                + " PARAMETROS BLOQUE ", true, identProd);
-        gramatica.group("FUNCION_NOPARAMS", "PUBLIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+        //=================FUNCIONES NO ESTATICAS 
+        gramatica.group("FUNCION_NOPARAMS", "PUBLIC VOID IDENTIFICADOR  "
                 + " PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
 
-        //funcion estatica
-        gramatica.group("FUNCION_EST_PARAMS", "PUBLIC STATIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+        gramatica.group("FUNCION_NOPARAMS_RETORNO", "PUBLIC FUNCION  "
+                + " PARENTESIS_C BLOQUE_RETORNO ", true, identProd);
+
+        gramatica.group("FUNCION_PARAMS", "PUBLIC VOID IDENTIFICADOR  "
                 + " PARAMETROS BLOQUE ", true, identProd);
-        gramatica.group("FUNCION_EST_NOPARAMS", "PUBLIC STATIC (VOID IDENTIFICADOR| DEC_ENTERO | DEC_CADENA | DEC_BOOL | DEC_FLOTANTE)  "
+
+        gramatica.group("FUNCION_PARAMS_RETORNO", "PUBLIC FUNCION  "
+                + " PARAMETROS BLOQUE_RETORNO ", true, identProd);
+
+        //================== FUNCIONES ESTATICAS
+        gramatica.group("FUNCION_EST_NOPARAMS", "PUBLIC STATIC VOID IDENTIFICADOR  "
                 + " PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
+
+        gramatica.group("FUNCION_EST_NOPARAMS_RETORNO", "PUBLIC STATIC FUNCION  "
+                + " PARENTESIS_C BLOQUE_RETORNO ", true, identProd);
+
+        gramatica.group("FUNCION_EST_PARAMS", "PUBLIC STATIC VOID IDENTIFICADOR  "
+                + " PARAMETROS BLOQUE ", true, identProd);
+
+        gramatica.group("FUNCION_EST_PARAMS_RETORNO", "PUBLIC STATIC FUNCION  "
+                + " PARAMETROS BLOQUE_RETORNO ", true, identProd);
 
         //constructor
         gramatica.group("FUNCION_CONST_PARAMS", " PUBLIC IDENTIFICADOR PARAMETROS BLOQUE ", true, identProd);
         gramatica.group("FUNCION_CONST_NOPARAMS", "PUBLIC IDENTIFICADOR PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
 
         //clases
-        gramatica.group("BLOQUE_CLASE", " LLAVE_A ( FUNCION_MAIN | FUNCION_PARAMS | FUNCION_NOPARAMS | "
-                + "FUNCION_EST_PARAMS | FUNCION_EST_NOPARAMS | FUNCION_CONST_PARAMS |FUNCION_CONST_NOPARAMS)+ LLAVE_C ", true, identProd);
+        gramatica.group("BLOQUE_CLASE", " LLAVE_A ( FUNCION_NOPARAMS | FUNCION_NOPARAMS_RETORNO | FUNCION_PARAMS | "
+                + "FUNCION_PARAMS_RETORNO | FUNCION_EST_NOPARAMS | FUNCION_EST_NOPARAMS_RETORNO |FUNCION_EST_PARAMS | "
+                + " FUNCION_EST_PARAMS_RETORNO  )+ LLAVE_C ", true, identProd);
         gramatica.group("CLASE", " PUBLIC CLASS IDENTIFICADOR BLOQUE_CLASE", true, identProd);
 
         //llamada a funciones
-        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
-                + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
-
+//        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
+//                + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
         /// ====================== ERRORES SINTACTICOS 
         gramatica.group("ERR_EXP_RELACIONAL", "PARENTESIS_A EXP_RELACIONAL  ", true,
                 6, "Error sintáctico {}: falta cierre de paréntesis en expresión relacional [# , %]");
         gramatica.delete("ERR_EXP_RELACIONAL", 9, " Error {}: Expresión relacional no esta declarada correctamente [# , %]");
 
-        gramatica.group("VAR_ENTERO", " (IDENTIFICADOR ASIG_ENTERO) | DEC_ENTERO | (DEC_ENTERO ASIG_ENTERO)", true,
+        gramatica.group("VAR_ENTERO", " (IDENTIFICADOR ASIG_ENTERO)  | (DEC_ENTERO ASIG_ENTERO)", true,
                 8, "Error {}: Falta punto y coma en declaracion  [# , %]");
         //gramatica.group("ERR_VAR_ENTERO", "(ASIG_ENTERO PUNTO_COMA)| ASIG_ENTERO ", true, 9, "Error {}: Falta decarar  [# , %]");
         gramatica.group("VAR_ENTERO", "(IDENTIFICADOR ) PUNTO_COMA ", true,
                 7, "Error {}: Falta asignación o tipo de dato [# , %]");
 //        gramatica.delete("VAR_ENTERO", 10, " × Error sintáctico {}: La variable entera no está declarada correctamente [#, %]");
 
-        gramatica.group("VAR_FLOTANTE", " IDENTIFICADOR ASIG_FLOTANTE | DEC_FLOTANTE | DEC_FLOTANTE ASIG_FLOTANTE ", true,
+        gramatica.group("VAR_FLOTANTE", " IDENTIFICADOR ASIG_FLOTANTE  | DEC_FLOTANTE ASIG_FLOTANTE ", true,
                 11, "Error {}: Falta punto y coma en declaracion  [# , %]");
         //gramatica.group("ERR_VAR_FLOTANTE", "(ASIG_FLOTANTE PUNTO_COMA)| ASIG_FLOTANTE ", true,12, "Error {}: Falta decarar  [# , %]");
         gramatica.group("VAR_FLOTANTE", "(IDENTIFICADOR ) PUNTO_COMA ", true,
                 13, "Error {}: Falta asignación o tipo de dato [# , %]");
 //        gramatica.delete("VAR_FLOTANTE", 14, " × Error sintáctico {}: La variable flotante no está declarada correctamente [#, %]");
 
-        gramatica.group("VAR_BOOL", " IDENTIFICADOR ASIG_BOOL | DEC_BOOL | DEC_BOOL ASIG_BOOL ", true,
+        gramatica.group("VAR_BOOL", " IDENTIFICADOR ASIG_BOOL | DEC_BOOL ASIG_BOOL ", true,
                 15, "Error {}: Falta punto y coma en declaracion  [# , %]");
         //gramatica.group("ERR_VAR_BOOL", "(ASIG_BOOL PUNTO_COMA)| ASIG_BOOL ", true,16, "Error {}: Falta decarar  [# , %]");
         gramatica.group("VAR_BOOL", "(IDENTIFICADOR ) PUNTO_COMA ", true,
                 17, "Error {}: Falta asignación o tipo de dato [# , %]");
 //        gramatica.delete("VAR_BOOL", 18, " × Error sintáctico {}: La variable booleana no está declarada correctamente [#, %]");
 
-        gramatica.group("VAR_CADENA", " IDENTIFICADOR ASIG_CADENA | DEC_CADENA | DEC_CADENA ASIG_CADENA ", true,
+        gramatica.group("VAR_CADENA", " IDENTIFICADOR ASIG_CADENA  | DEC_CADENA ASIG_CADENA ", true,
                 19, "Error {}: Falta punto y coma en declaracion  [# , %]");
         //gramatica.group("ERR_VAR_CADENA", "(ASIG_CADENA PUNTO_COMA)| ASIG_CADENA ", true,20, "Error {}: Falta decarar  [# , %]");
         gramatica.group("VAR_CADENA", "(IDENTIFICADOR ) CADENA ", true,
                 21, "Error {}: Falta asignación o tipo de dato [# , %]");
 //        gramatica.delete("VAR_CADENA", 22, " × Error sintáctico {}: La variable cadena no está declarada correctamente [#, %]");
 
-        gramatica.group("VAR_CHAR", " IDENTIFICADOR ASIG_CHAR | DEC_CHAR | DEC_CHAR ASIG_CHAR ", true,
+        gramatica.group("VAR_CHAR", " IDENTIFICADOR ASIG_CHAR  | DEC_CHAR ASIG_CHAR ", true,
                 23, "Error {}: Falta punto y coma en declaracion  [# , %]");
         //        gramatica.group("ERR_VAR_CHAR", "(ASIG_CHAR PUNTO_COMA)| ASIG_CHAR ", true,24, "Error {}: Falta decarar  [# , %]");
         gramatica.group("VAR_CHAR", "(IDENTIFICADOR ) CHAR ", true,
@@ -524,108 +560,113 @@ public class Compilador extends javax.swing.JFrame {
     }
 
     private void semanticAnalysis() {
-        System.out.println("Analisis Semantico");
 
-//        for(Production production: identProd){
-//            System.out.println("Producción: " + production);
+        System.out.println("\n\n\n");
+        for (Production production : identProd) {
+            String productionName = production.getName();
+            System.out.println("productionName = " + productionName);
 //            for (int i = 0; i < production.getSizeTokens(); i++) {
 //                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
 //            }
-//        }
-        HashMap<String, String> declaredVariables = new HashMap<>();
-        //conocer si la variable esta anteriormente declarada y conocer si se le asigna un dato de tipo compatible
+        }
+        System.out.println("\n\n\n");
+        Estructura.limpiarListas();
+
         for (Production production : identProd) {
+            FuncionEstatica funcionEstatica;
+            FuncionNoEstatica funcionNoEstatica;
+            FuncionMain funcionMain;
             String productionName = production.getName();
 
-            // Manejo de declaraciones
-            if (productionName.startsWith("DEC_")) {
-                System.out.println("\nproductionName = " + productionName);
-                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
+            // Funcion Estatica Con parametros sin retorno
+            if (productionName.equals("FUNCION_EST_PARAMS")) {
+                funcionEstatica = new FuncionEstatica();
+                funcionEstatica.setNombre(production.lexemeRank(3));
+                funcionEstatica.setTipoRetorno(production.lexicalCompRank(2)); //void 
+                funcionEstatica.setRetorno(false); //void 
+                funcionEstatica.setFilaInicial(production.getLine());
+                funcionEstatica.setFilaFinal(production.getFinalLine());
+                funcionEstatica.setColumna(production.getColumn());
 
-                System.out.println("DECLARACIONES ");
-                String varName = production.lexemeRank(1); // El nombre del identificador
-                System.out.println("varName = " + varName);
-                String varType = productionName.substring(4); // Extraer el tipo del nombre de la producción (ej. "ENTERO", "FLOTANTE")
-                System.out.println("varType = " + varType);
-                if (declaredVariables.containsKey(varName)) {
-                    // Error: Variable ya declarada
-                    errors.add(new ErrorLSSL(1, " × Error semántico {}: variable ya declarada [#, %]", production, true));
-                } else {
-                    // Registrar la variable
-                    declaredVariables.put(varName, varType);
-                }
-            } // Manejo de asignaciones
-            else if (productionName.startsWith("VAR_") && !production.lexicalCompRank(0).startsWith("DATO_")) {
-
-                System.out.println("\nproductionName = " + productionName);
-                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-
-                System.out.println("ASIGNACIONES");
-                String varName = production.lexemeRank(0); // El identificador usado en la asignación
-                System.out.println("varName = " + varName);
-                if (!declaredVariables.containsKey(varName)) {
-                    // Error: Variable no declarada
-                    errors.add(new ErrorLSSL(2, " × Error semántico {}: variable no declarada antes de ser usada [#, %]", production, true));
-                } else {
-                    // Verificar compatibilidad de tipos (opcional)
-                    String expectedType = declaredVariables.get(varName);
-                    System.out.println("expectedType = " + expectedType);
-                    String assignedValueType = production.lexicalCompRank(production.getSizeTokens() - 2); // Último componente léxico
-                    System.out.println("assignedValueType = " + assignedValueType);
-                    if (!isCompatibleType(expectedType, assignedValueType)) {
-                        errors.add(new ErrorLSSL(3, " × Error semántico {}: asignación incompatible con el tipo de dato [#, %]", production, true));
+                // Extraer y validar los parámetros (tipo y nombre)
+                for (int i = 5; i < production.getSizeTokens() - 2; i += 2) {
+                    if (production.lexicalCompRank(i).equals("PARENTESIS_C")) {
+                        break;
                     }
+                    if (production.lexicalCompRank(i).equals("COMA")) {
+                        i--;
+                        continue;
+                    }
+                    String paramType = production.lexicalCompRank(i);  // Tipo de dato
+                    paramType = paramType.substring(5);
+                    funcionEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
+                Estructura.agregarFuncionEstatica(funcionEstatica);
+
+            } // Funcion Estatica Con parametros con retorno
+            else if (productionName.equals("FUNCION_EST_PARAMS_RETORNO")) {
+                System.out.println("================retorno: " + production.lexicalCompRank(production.getSizeTokens() - 3));
+                funcionEstatica = new FuncionEstatica();
+                funcionEstatica.setNombre(production.lexemeRank(3));
+                funcionEstatica.setTipoRetorno(production.lexicalCompRank(2).substring(5)); //int boolean etc....
+                funcionEstatica.setRetorno(true); //void 
+                funcionEstatica.setRetornoAsignado(regresarTipoDato(production.lexicalCompRank(production.getSizeTokens() - 3)));
+                funcionEstatica.setFilaInicial(production.getLine());
+                funcionEstatica.setFilaFinal(production.getFinalLine());
+                funcionEstatica.setColumna(production.getColumn());
+
+                // Extraer y validar los parámetros (tipo y nombre)
+                for (int i = 5; i < production.getSizeTokens() - 2; i += 2) {
+                    if (production.lexicalCompRank(i).equals("PARENTESIS_C")) {
+                        break;
+                    }
+                    if (production.lexicalCompRank(i).equals("COMA")) {
+                        i--;
+                        continue;
+                    }
+                    String paramType = production.lexicalCompRank(i);  // Tipo de dato
+                    paramType = paramType.substring(5);
+                    funcionEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
+                }
+                Estructura.agregarFuncionEstatica(funcionEstatica);
+
             }
-        }
 
-        System.out.println("\n\n=======Verificacion ahora de Funciones SIN PARAMETROS ");
-        HashMap<String, String> declaredFunctions = new HashMap<>();
+            // Funcion Estatica Sin parametros sin retorno
+            if (productionName.equals("FUNCION_EST_NOPARAMS")) {
+                funcionEstatica = new FuncionEstatica();
+                funcionEstatica.setNombre(production.lexemeRank(3));
+                funcionEstatica.setTipoRetorno(production.lexicalCompRank(2)); //void 
+                funcionEstatica.setRetorno(false); //void 
+                funcionEstatica.setFilaInicial(production.getLine());
+                funcionEstatica.setFilaFinal(production.getFinalLine());
+                funcionEstatica.setColumna(production.getColumn());
+                Estructura.agregarFuncionEstatica(funcionEstatica);
 
-        for (Production production : identProd) {
-            String productionName = production.getName();
-            System.out.println("\nproductionName = " + productionName);
-            System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-            System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
+            } // Funcion Estatica Sin parametros con retorno
+            else if (productionName.equals("FUNCION_EST_NOPARAMS_RETORNO")) {
+                System.out.println("================retorno: " + production.lexicalCompRank(production.getSizeTokens() - 3));
+                funcionEstatica = new FuncionEstatica();
+                funcionEstatica.setNombre(production.lexemeRank(3));
+                funcionEstatica.setTipoRetorno(production.lexicalCompRank(2).substring(5)); //int boolean etc....
+                funcionEstatica.setRetorno(true); //void 
+                funcionEstatica.setRetornoAsignado(regresarTipoDato(production.lexicalCompRank(production.getSizeTokens() - 3)));
+                funcionEstatica.setFilaInicial(production.getLine());
+                funcionEstatica.setFilaFinal(production.getFinalLine());
+                funcionEstatica.setColumna(production.getColumn());
+                Estructura.agregarFuncionEstatica(funcionEstatica);
 
-            if (productionName.startsWith("FUNCION_NOPARAMS")) {
-                String functionName = production.lexemeRank(2); // Asumiendo que el nombre de la función está en el índice 2
-                System.out.println("functionName = " + functionName);
-                String returnType = production.lexicalCompRank(1); // Tipo de retorno después de 'PUBLIC' y opcionalmente 'STATIC'
-                System.out.println("returnType = " + returnType);
-
-                if (declaredFunctions.containsKey(functionName)) {
-                    // Error: Variable ya declarada
-                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion ya declarada [#, %]", production, true));
-                } else {
-                    // Registrar la variable
-                    declaredFunctions.put(functionName, returnType); // Guarda la función
-                }
-
-            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() == 4) {
-                String functionName = production.lexemeRank(0); // Nombre de la función llamada
-                System.out.println("functionName = " + functionName);
-                if (!declaredFunctions.containsKey(functionName)) {
-                    errors.add(new ErrorLSSL(5, " × Error semántico {}: la función '" + functionName + "' no está declarada [#, %]", production, true));
-                }
             }
 
-        }
-
-        System.out.println("\n\n=======Verificacion ahora de Funciones CON PARAMETROS ");
-        HashMap<String, List<String>> functionParams = new HashMap<>();
-
-        // Validación de funciones con parámetros
-        for (Production production : identProd) {
-            String productionName = production.getName();
-
-            // Declaración de funciones con parámetros
-            if (productionName.startsWith("FUNCION_PARAMS")) {
-                String functionName = production.lexemeRank(2); // Nombre de la función
-                System.out.println(functionName);
-                List<String> paramTypes = new ArrayList<>();
+            // Funcion Con parametros sin retorno
+            if (productionName.equals("FUNCION_PARAMS")) {
+                funcionNoEstatica = new FuncionNoEstatica();
+                funcionNoEstatica.setNombre(production.lexemeRank(2));
+                funcionNoEstatica.setTipoRetorno(production.lexicalCompRank(1)); //void 
+                funcionNoEstatica.setRetorno(false); //void 
+                funcionNoEstatica.setFilaInicial(production.getLine());
+                funcionNoEstatica.setFilaFinal(production.getFinalLine());
+                funcionNoEstatica.setColumna(production.getColumn());
 
                 // Extraer y validar los parámetros (tipo y nombre)
                 for (int i = 4; i < production.getSizeTokens() - 2; i += 2) {
@@ -638,79 +679,391 @@ public class Compilador extends javax.swing.JFrame {
                     }
                     String paramType = production.lexicalCompRank(i);  // Tipo de dato
                     paramType = paramType.substring(5);
-//identificar que este dentro de los parentesis, posteriormente identificar que sea un tipo de dato seguido de nombre 
-                    String paramName = production.lexemeRank(i + 1);  // Nombre del parámetro
-
-                    // Agregar el parámetro si es válido
-                    paramTypes.add(paramType);
+                    funcionNoEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
+                Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
 
-                functionParams.put(functionName, paramTypes); // Registrar parámetros
-                System.out.println("Function '" + functionName + "' declared with parameters: " + paramTypes);
-            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() > 4) {
+            } // Funcion Con parametros con retorno
+            else if (productionName.equals("FUNCION_PARAMS_RETORNO")) {
+                System.out.println("================retorno: " + production.lexicalCompRank(production.getSizeTokens() - 3));
+                funcionNoEstatica = new FuncionNoEstatica();
+                funcionNoEstatica.setNombre(production.lexemeRank(2));
+                funcionNoEstatica.setTipoRetorno(production.lexicalCompRank(1).substring(5)); //int boolean etc....
+                funcionNoEstatica.setRetorno(true); //void 
+                funcionNoEstatica.setRetornoAsignado(regresarTipoDato(production.lexicalCompRank(production.getSizeTokens() - 3)));
+                funcionNoEstatica.setFilaInicial(production.getLine());
+                funcionNoEstatica.setFilaFinal(production.getFinalLine());
+                funcionNoEstatica.setColumna(production.getColumn());
 
-                String functionName = production.lexemeRank(0); // Nombre de la función
-
-                if (functionParams.get(functionName) == null) {
-                    // Error: Variable ya declarada
-                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion NO declarada [#, %]", production, true));
-                    break;
+                // Extraer y validar los parámetros (tipo y nombre)
+                for (int i = 4; i < production.getSizeTokens() - 2; i += 2) {
+                    if (production.lexicalCompRank(i).equals("PARENTESIS_C")) {
+                        break;
+                    }
+                    if (production.lexicalCompRank(i).equals("COMA")) {
+                        i--;
+                        continue;
+                    }
+                    String paramType = production.lexicalCompRank(i);  // Tipo de dato
+                    paramType = paramType.substring(5);
+                    funcionNoEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
+                Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
 
-                // Validar los parámetros
-                List<String> expectedParams = functionParams.get(functionName);
+            }
 
-                List<String> actualParams = new ArrayList<>();
-                List<String> nombreParams = new ArrayList<>();
+            // Funcion Sin parametros sin retorno
+            if (productionName.equals("FUNCION_NOPARAMS")) {
+                funcionNoEstatica = new FuncionNoEstatica();
+                funcionNoEstatica.setNombre(production.lexemeRank(2));
+                funcionNoEstatica.setTipoRetorno(production.lexicalCompRank(1)); //void 
+                funcionNoEstatica.setRetorno(false); //void 
+                funcionNoEstatica.setFilaInicial(production.getLine());
+                funcionNoEstatica.setFilaFinal(production.getFinalLine());
+                funcionNoEstatica.setColumna(production.getColumn());
+                Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
 
+            } // Funcion Sin parametros con retorno
+            else if (productionName.equals("FUNCION_NOPARAMS_RETORNO")) {
+                System.out.println("================retorno: " + production.lexicalCompRank(production.getSizeTokens() - 3));
+                funcionNoEstatica = new FuncionNoEstatica();
+                funcionNoEstatica.setNombre(production.lexemeRank(2));
+                funcionNoEstatica.setTipoRetorno(production.lexicalCompRank(1).substring(5)); //int boolean etc....
+                funcionNoEstatica.setRetorno(true); //void 
+                funcionNoEstatica.setRetornoAsignado(regresarTipoDato(production.lexicalCompRank(production.getSizeTokens() - 3)));
+                funcionNoEstatica.setFilaInicial(production.getLine());
+                funcionNoEstatica.setFilaFinal(production.getFinalLine());
+                funcionNoEstatica.setColumna(production.getColumn());
+                Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
+
+            }
+
+            if (productionName.equals("FUNCION_MAIN")) {
+                funcionMain = new FuncionMain();
+                funcionMain.setNombre(production.lexemeRank(3));
+                funcionMain.setFilaInicial(production.getLine());
+                funcionMain.setFilaFinal(production.getFinalLine());
+                funcionMain.setColumna(production.getColumn());
+                Estructura.setFuncionMain(funcionMain);
+
+            }
+
+        }
+
+        for (Production production : identProd) {
+            Variable variableDeclarada = new Variable();
+            Variable variableEnUso = new Variable();
+            LlamadaFuncion llamadaFuncion;
+            String productionName = production.getName();
+
+            // Manejo de declaraciones
+            if (productionName.startsWith("DEC_") && (production.getColumn() < 8 || production.getColumn() > 16)) {
+                System.out.println("productionName = " + productionName);
+                System.out.println("production.lexemeRank(0,-1) = " + production.lexemeRank(0, -1));
+                System.out.println("production.getColumn() = " + production.getColumn());
+                variableDeclarada.setNombreVariable(production.lexemeRank(1));
+                variableDeclarada.setTipoDato(productionName.substring(4));
+                variableDeclarada.setFila(production.getLine());
+                variableDeclarada.setColumna(production.getColumn());
+                Estructura.agregarVariable(variableDeclarada);
+            } // Manejo de asignaciones
+            else if (productionName.startsWith("VAR_") && !production.lexicalCompRank(0).startsWith("DATO_")) {
+                variableEnUso.setNombreVariable(production.lexemeRank(0));
+                variableEnUso.setTipoDato(regresarTipoDato(production.lexicalCompRank(2)));
+                variableEnUso.setFila(production.getLine());
+                variableEnUso.setColumna(production.getColumn());
+                Estructura.agregarVariableEnUso(variableEnUso);
+            }
+
+            if (productionName.equals("CALL_FUNC") && production.getSizeTokens() == 4) {
+                llamadaFuncion = new LlamadaFuncion();
+                llamadaFuncion.setNombre(production.lexemeRank(0));
+                llamadaFuncion.setFilaInicial(production.getLine());
+                llamadaFuncion.setColumna(production.getColumn());
+                Estructura.agregarLlamadaFuncion(llamadaFuncion);
+            } else //caso contrario
+            if (productionName.equals("CALL_FUNC") && production.getSizeTokens() > 4) {
+                llamadaFuncion = new LlamadaFuncion();
+                llamadaFuncion.setNombre(production.lexemeRank(0));
                 // Extraer los tipos de parámetros pasados en la llamada
                 for (int i = 2; i < production.getSizeTokens() - 2; i += 2) { // Asumiendo que los parámetros están en índices impares
-                    actualParams.add(production.lexicalCompRank(i));
-                    nombreParams.add(production.lexemeRank(i));
+                    llamadaFuncion.agregarParametro(production.lexemeRank(i), regresarTipoDato(production.lexicalCompRank(i)));
 
                 }
-
-                System.out.println("Esperados" + expectedParams + "\nactuales" + actualParams);
-                System.out.println("actualParams = " + actualParams);
-
-                // Comparar cantidad de parámetros
-                if (expectedParams.size() != actualParams.size()) {
-                    errors.add(new ErrorLSSL(
-                            6,
-                            "× Error semántico: la función '" + functionName + "' esperaba " + expectedParams.size()
-                            + " parámetros, pero se encontraron " + actualParams.size() + ". Revisa la cantidad de argumentos proporcionados.",
-                            production,
-                            true
-                    ));
-                    continue;
-                }
-
-                // Comparar tipos de parámetros
-                for (int i = 0; i < expectedParams.size(); i++) {
-                    System.out.println("----------" + actualParams.get(i));
-                    System.out.println("----------" + expectedParams.get(i));
-                    if (!isCompatibleType(expectedParams.get(i), actualParams.get(i), nombreParams.get(i), production, declaredVariables)) {
-                        errors.add(new ErrorLSSL(
-                                7,
-                                "× Error semántico: el parámetro " + (i + 1) + " de la función '" + functionName
-                                + "' esperaba un valor de tipo '" + expectedParams.get(i) + "', pero se proporcionó un valor de tipo '"
-                                + actualParams.get(i) + "'. Corrige el tipo de dato del argumento.",
-                                production,
-                                true
-                        ));
-                    }
-                }
-                if (production.getSizeTokens() < expectedParams.size()) {
-                    errors.add(new ErrorLSSL(
-                            8,
-                            "× Error semántico: producción malformada para '" + productionName + "'. Verifica que la definición de la función o su llamada sea correcta.",
-                            production,
-                            true
-                    ));
-                    continue;
-                }
+                llamadaFuncion.setFilaInicial(production.getLine());
+                llamadaFuncion.setColumna(production.getColumn());
+                Estructura.agregarLlamadaFuncion(llamadaFuncion);
             }
+
         }
+
+        Estructura.verificarVariablesUsadas();
+        Estructura.verificarAsignacionVariables();
+
+        Estructura.verificarRetornosFuncionesEstaticas();
+        Estructura.verificarRetornosFuncionesNoEstaticas();
+
+        Estructura.verificarContextoLlamadas();
+        Estructura.verificarLlamadasFunciones();
+        Estructura.verificarContextoDeLlamada();
+
+        mensajesErroneos = Estructura.obtenerMensajesDeErrores();
+
+        System.out.println("\nVariables Declaradas");
+        Estructura.getVariablesDeclaradas().forEach(variable -> {
+            System.out.println(variable);
+        });
+
+        System.out.println("\nVariables En Uso");
+        Estructura.getVariablesEnUso().forEach(variable -> {
+            System.out.println(variable);
+        });
+
+        System.out.println("\nErrores en variables");
+        Estructura.getErroresVariables().forEach(variable -> {
+            System.out.println(variable);
+        });
+
+        System.out.println("\n\nFunciones Estaticas declaradas");
+        Estructura.getFuncionesEstaticas().forEach(funcion -> {
+            System.out.println(funcion);
+        });
+
+        System.out.println("\nErrores Funciones Estaticas declaradas");
+        Estructura.getErroresFuncionesEstaticas().forEach(funcion -> {
+            System.out.println(funcion);
+        });
+
+        System.out.println("\n\nFunciones NO ESTATICAS declaradas");
+        Estructura.getFuncionesNoEstaticas().forEach(funcion -> {
+            System.out.println(funcion);
+        });
+
+        System.out.println("\nErrores Funciones NO ESTATICAS declaradas");
+        Estructura.getErroresFuncionesNoEstaticas().forEach(funcion -> {
+            System.out.println(funcion);
+        });
+
+        System.out.println("\n\nFuncion Main");
+        System.out.println(Estructura.getFuncionMain());
+
+        System.out.println("\n\nllamadas a Funciones");
+        Estructura.getLlamadasFunciones().forEach(llamada -> {
+            System.out.println(llamada);
+        });
+
+        System.out.println("\nErrores Llamadas a Funciones");
+        Estructura.getErroresLlamadaFuncion().forEach(llamada -> {
+            System.out.println(llamada);
+        });
+
+//        System.out.println("Analisis Semantico");
+//
+////        for(Production production: identProd){
+////            System.out.println("Producción: " + production);
+////            for (int i = 0; i < production.getSizeTokens(); i++) {
+////                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
+////            }
+////        }
+//        HashMap<String, String> declaredVariables = new HashMap<>();
+//        //conocer si la variable esta anteriormente declarada y conocer si se le asigna un dato de tipo compatible
+//        for (Production production : identProd) {
+//            String productionName = production.getName();
+//
+//            // Manejo de declaraciones
+//            if (productionName.startsWith("DEC_")) {
+//                System.out.println("\nproductionName = " + productionName);
+//                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
+//                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
+//
+//                System.out.println("DECLARACIONES ");
+//                String varName = production.lexemeRank(1); // El nombre del identificador
+//                System.out.println("varName = " + varName);
+//                String varType = productionName.substring(4); // Extraer el tipo del nombre de la producción (ej. "ENTERO", "FLOTANTE")
+//                System.out.println("varType = " + varType);
+//                if (declaredVariables.containsKey(varName)) {
+//                    // Error: Variable ya declarada
+//                    errors.add(new ErrorLSSL(1, " × Error semántico {}: variable ya declarada [#, %]", production, true));
+//                } else {
+//                    // Registrar la variable
+//                    declaredVariables.put(varName, varType);
+//                }
+//            } // Manejo de asignaciones
+//            else if (productionName.startsWith("VAR_") && !production.lexicalCompRank(0).startsWith("DATO_")) {
+//
+//                System.out.println("\nproductionName = " + productionName);
+//                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
+//                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
+//
+//                System.out.println("ASIGNACIONES");
+//                String varName = production.lexemeRank(0); // El identificador usado en la asignación
+//                System.out.println("varName = " + varName);
+//                if (!declaredVariables.containsKey(varName)) {
+//                    // Error: Variable no declarada
+//                    errors.add(new ErrorLSSL(2, " × Error semántico {}: variable no declarada antes de ser usada [#, %]", production, true));
+//                } else {
+//                    // Verificar compatibilidad de tipos (opcional)
+//                    String expectedType = declaredVariables.get(varName);
+//                    System.out.println("expectedType = " + expectedType);
+//                    String assignedValueType = production.lexicalCompRank(production.getSizeTokens() - 2); // Último componente léxico
+//                    System.out.println("assignedValueType = " + assignedValueType);
+//                    if (!isCompatibleType(expectedType, assignedValueType)) {
+//                        errors.add(new ErrorLSSL(3, " × Error semántico {}: asignación incompatible con el tipo de dato [#, %]", production, true));
+//                    }
+//                }
+//            }
+//        }
+//
+//        System.out.println("\n\n=======Verificacion ahora de Funciones SIN PARAMETROS ");
+//        HashMap<String, String> declaredFunctions = new HashMap<>();
+//
+//        for (Production production : identProd) {
+//            String productionName = production.getName();
+//            System.out.println("\nproductionName = " + productionName);
+//            System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
+//            System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
+//
+//            if (productionName.startsWith("FUNCION_NOPARAMS")) {
+//                String functionName = production.lexemeRank(2); // Asumiendo que el nombre de la función está en el índice 2
+//                System.out.println("functionName = " + functionName);
+//                String returnType = production.lexicalCompRank(1); // Tipo de retorno después de 'PUBLIC' y opcionalmente 'STATIC'
+//                System.out.println("returnType = " + returnType);
+//
+//                if (declaredFunctions.containsKey(functionName)) {
+//                    // Error: Variable ya declarada
+//                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion ya declarada [#, %]", production, true));
+//                } else {
+//                    // Registrar la variable
+//                    declaredFunctions.put(functionName, returnType); // Guarda la función
+//                }
+//
+//            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() == 4) {
+//                String functionName = production.lexemeRank(0); // Nombre de la función llamada
+//                System.out.println("functionName = " + functionName);
+//                if (!declaredFunctions.containsKey(functionName)) {
+//                    errors.add(new ErrorLSSL(5, " × Error semántico {}: la función '" + functionName + "' no está declarada [#, %]", production, true));
+//                }
+//            }
+//
+//        }
+//
+//        System.out.println("\n\n=======Verificacion ahora de Funciones CON PARAMETROS ");
+//        HashMap<String, List<String>> functionParams = new HashMap<>();
+//
+//        // Validación de funciones con parámetros
+//        for (Production production : identProd) {
+//            String productionName = production.getName();
+//
+//            // Declaración de funciones con parámetros
+//            if (productionName.startsWith("FUNCION_PARAMS")) {
+//                String functionName = production.lexemeRank(2); // Nombre de la función
+//                System.out.println(functionName);
+//                List<String> paramTypes = new ArrayList<>();
+//
+//                // Extraer y validar los parámetros (tipo y nombre)
+//                for (int i = 4; i < production.getSizeTokens() - 2; i += 2) {
+//                    if (production.lexicalCompRank(i).equals("PARENTESIS_C")) {
+//                        break;
+//                    }
+//                    if (production.lexicalCompRank(i).equals("COMA")) {
+//                        i--;
+//                        continue;
+//                    }
+//                    String paramType = production.lexicalCompRank(i);  // Tipo de dato
+//                    paramType = paramType.substring(5);
+////identificar que este dentro de los parentesis, posteriormente identificar que sea un tipo de dato seguido de nombre 
+//                    String paramName = production.lexemeRank(i + 1);  // Nombre del parámetro
+//
+//                    // Agregar el parámetro si es válido
+//                    paramTypes.add(paramType);
+//                }
+//
+//                functionParams.put(functionName, paramTypes); // Registrar parámetros
+//                System.out.println("Function '" + functionName + "' declared with parameters: " + paramTypes);
+//            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() > 4) {
+//
+//                String functionName = production.lexemeRank(0); // Nombre de la función
+//
+//                if (functionParams.get(functionName) == null) {
+//                    // Error: Variable ya declarada
+//                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion NO declarada [#, %]", production, true));
+//                    break;
+//                }
+//
+//                // Validar los parámetros
+//                List<String> expectedParams = functionParams.get(functionName);
+//
+//                List<String> actualParams = new ArrayList<>();
+//                List<String> nombreParams = new ArrayList<>();
+//
+//                // Extraer los tipos de parámetros pasados en la llamada
+//                for (int i = 2; i < production.getSizeTokens() - 2; i += 2) { // Asumiendo que los parámetros están en índices impares
+//                    actualParams.add(production.lexicalCompRank(i));
+//                    nombreParams.add(production.lexemeRank(i));
+//
+//                }
+//
+//                System.out.println("Esperados" + expectedParams + "\nactuales" + actualParams);
+//                System.out.println("actualParams = " + actualParams);
+//
+//                // Comparar cantidad de parámetros
+//                if (expectedParams.size() != actualParams.size()) {
+//                    errors.add(new ErrorLSSL(
+//                            6,
+//                            "× Error semántico: la función '" + functionName + "' esperaba " + expectedParams.size()
+//                            + " parámetros, pero se encontraron " + actualParams.size() + ". Revisa la cantidad de argumentos proporcionados.",
+//                            production,
+//                            true
+//                    ));
+//                    continue;
+//                }
+//
+//                // Comparar tipos de parámetros
+//                for (int i = 0; i < expectedParams.size(); i++) {
+//                    System.out.println("----------" + actualParams.get(i));
+//                    System.out.println("----------" + expectedParams.get(i));
+//                    if (!isCompatibleType(expectedParams.get(i), actualParams.get(i), nombreParams.get(i), production, declaredVariables)) {
+//                        errors.add(new ErrorLSSL(
+//                                7,
+//                                "× Error semántico: el parámetro " + (i + 1) + " de la función '" + functionName
+//                                + "' esperaba un valor de tipo '" + expectedParams.get(i) + "', pero se proporcionó un valor de tipo '"
+//                                + actualParams.get(i) + "'. Corrige el tipo de dato del argumento.",
+//                                production,
+//                                true
+//                        ));
+//                    }
+//                }
+//                if (production.getSizeTokens() < expectedParams.size()) {
+//                    errors.add(new ErrorLSSL(
+//                            8,
+//                            "× Error semántico: producción malformada para '" + productionName + "'. Verifica que la definición de la función o su llamada sea correcta.",
+//                            production,
+//                            true
+//                    ));
+//                    continue;
+//                }
+//            }
+//        }
+    }
+
+    private String regresarTipoDato(String valor) {
+
+        switch (valor) {
+            case "NUMERO_ENTERO":
+                return "ENTERO";
+            case "NUMERO_FLOTANTE":
+                return "FLOTANTE";
+            case "CARACTER":
+                return "CHAR";
+            case "TRUE":
+            case "FALSE":
+                return "BOOL";
+            case "CADENA_TEXTO":
+                return "CADENA";
+            default:
+                return valor;
+        }
+
     }
 
     // Método auxiliar para verificar compatibilidad de tipos
@@ -718,14 +1071,18 @@ public class Compilador extends javax.swing.JFrame {
         // Ejemplo simple de compatibilidad
         switch (expectedType) {
             case "ENTERO":
+            case "NUMERO_ENTERO":
                 return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("IDENTIFICADOR");
             case "FLOTANTE":
+            case "NUMERO_FLOTANTE":
                 return assignedType.equals("NUMERO_FLOTANTE") || assignedType.equals("IDENTIFICADOR");
             case "CHAR":
+            case "CARACTER":
                 return assignedType.equals("CARACTER") || assignedType.equals("IDENTIFICADOR");
             case "BOOL":
                 return assignedType.equals("TRUE") || assignedType.equals("FALSE") || assignedType.equals("IDENTIFICADOR");
             case "CADENA":
+            case "CADENA_TEXTO":
                 return assignedType.equals("CADENA_TEXTO") || assignedType.equals("IDENTIFICADOR");
             default:
                 return false;
@@ -793,12 +1150,19 @@ public class Compilador extends javax.swing.JFrame {
 
     private void printConsole() {
         int sizeErrors = errors.size();
-        if (sizeErrors > 0) {
-            Functions.sortErrorsByLineAndColumn(errors);
+        if (sizeErrors > 0 || !mensajesErroneos.isEmpty()) {
             String strErrors = "\n";
-            for (ErrorLSSL error : errors) {
-                String strError = String.valueOf(error);
-                strErrors += strError + "\n";
+            if (sizeErrors > 0) {
+                Functions.sortErrorsByLineAndColumn(errors);
+                for (ErrorLSSL error : errors) {
+                    String strError = String.valueOf(error);
+                    strErrors += strError + "\n";
+                }
+            }
+            if (!mensajesErroneos.isEmpty()) {
+                for (String error : mensajesErroneos) {
+                    strErrors += error;
+                }
             }
             jtaOutputConsole.setText("Compilación terminada...\n" + strErrors + "\nLa compilación terminó con errores...");
         } else {

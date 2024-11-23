@@ -1,6 +1,22 @@
-public static void sumar(){}
-
-public static void main(String[] args){
-sumar();
+int valor1;
+public static void sumar(){
+int valor10;
 }
 
+public static String resta(int valor10, double valor2, String nombre, char caracter, boolean verdadero){
+int nuevoValor;
+nuevoValor = 3;
+return 3;
+}
+
+public static void main(String[] args){
+boolean nuevoValor;
+nuevoValor = true;
+
+
+valor1 = 5;
+}
+
+public  void nuevo(){
+
+}
