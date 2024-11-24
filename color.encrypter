@@ -10,9 +10,9 @@ return 3;
 }
 
 public static void main(String[] args){
-boolean nuevoValor;
-nuevoValor = true;
 
+nuevoValor = true;
+int valor 10;
 
 valor1 = 5;
 }
