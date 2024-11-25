@@ -74,6 +74,10 @@ class | public | private | protected | static | final | void | return
  "]"  {/*Ignorar*/}
 ","  {/*Ignorar*/}
 
+\? {/*Ignorar*/}
+
+\: {/*Ignorar*/}
+
 (int|float|double|char|boolean|byte|short|String|long)\[\]   {/*Ignorar*/}
 
 /*NÚMEROS ENTEROS*/

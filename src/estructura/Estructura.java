@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -96,6 +97,15 @@ public class Estructura {
             String retornoAsignado = funcion.getRetornoAsignado();
 
             if (tipoRetorno != null && retornoAsignado != null) {
+                if (retornoAsignado.equals("IDENTIFICADOR")) {
+                    //verificar si la variable esta declarada
+                    //verificar si el tipo de dato es el correcto
+
+                    if (identificadorDeclarado(funcion)) {
+                        continue;
+                    }
+                }
+                //si es un retorno valido entero, char, bool
                 if (tipoRetorno.equals(retornoAsignado)) {
                     return false;
                 } else {
@@ -111,6 +121,71 @@ public class Estructura {
         }
 
         return false;
+    }
+
+    public static boolean identificadorDeclarado(FuncionEstatica funcion) {
+        boolean declarado = false;
+        boolean compatible = false;
+        for (Variable variable : variablesDeclaradas) {
+            if (variable.getNombreVariable().equals(funcion.getNombreIdentificadorRetorno())
+                    && variable.getRangoInicial() == funcion.getFilaInicial()
+                    && variable.getRangoFinal() == funcion.getFilaFinal()) {
+                declarado = true;
+                if (variable.getTipoDato().equals(funcion.getTipoRetorno())) {
+                    compatible = true;
+                }
+                break;
+            }
+        }
+
+        if (!declarado) {
+            ErrorFuncionEstatica errorFuncionEstatica = new ErrorFuncionEstatica();
+            errorFuncionEstatica.setMensajeError("el identificador de retorno: " + funcion.getNombreIdentificadorRetorno()
+                    + " no se encuentra declarado en el bloque de la funcion ");
+            errorFuncionEstatica.setFuncionEstaticaError(funcion);
+            erroresFuncionesEstaticas.add(errorFuncionEstatica);
+        } else if (!compatible) {
+            ErrorFuncionEstatica errorFuncionEstatica = new ErrorFuncionEstatica();
+            errorFuncionEstatica.setMensajeError("el identificador de retorno: " + funcion.getNombreIdentificadorRetorno()
+                    + " no es compatible con el retorno solicitado por la funcion ");
+            errorFuncionEstatica.setFuncionEstaticaError(funcion);
+            erroresFuncionesEstaticas.add(errorFuncionEstatica);
+        }
+
+        return (declarado || compatible);
+    }
+
+    public static boolean identificadorDeclarado(FuncionNoEstatica funcion) {
+        System.out.println("entramos al identificar funcion " + funcion.getNombre());
+        boolean declarado = false;
+        boolean compatible = false;
+        for (Variable variable : variablesDeclaradas) {
+            if (variable.getNombreVariable().equals(funcion.getNombreIdentificadorRetorno())
+                    && variable.getRangoInicial() == funcion.getFilaInicial()
+                    && variable.getRangoFinal() == funcion.getFilaFinal()) {
+                declarado = true;
+                if (variable.getTipoDato().equals(funcion.getTipoRetorno())) {
+                    compatible = true;
+                }
+                break;
+            }
+        }
+
+        if (!declarado) {
+            ErrorFuncionNoEstatica errorFuncionNoEstatica = new ErrorFuncionNoEstatica();
+            errorFuncionNoEstatica.setMensajeError("el identificador de retorno: " + funcion.getNombreIdentificadorRetorno()
+                    + " no se encuentra declarado en el bloque de la funcion ");
+            errorFuncionNoEstatica.setFuncionNoEstatica(funcion);
+            erroresFuncionesNoEstaticas.add(errorFuncionNoEstatica);
+        } else if (!compatible) {
+            ErrorFuncionNoEstatica errorFuncionNoEstatica = new ErrorFuncionNoEstatica();
+            errorFuncionNoEstatica.setMensajeError("el identificador de retorno: " + funcion.getNombreIdentificadorRetorno()
+                    + " no es compatible con el retorno solicitado por la funcion ");
+            errorFuncionNoEstatica.setFuncionNoEstatica(funcion);
+            erroresFuncionesNoEstaticas.add(errorFuncionNoEstatica);
+        }
+
+        return (declarado || compatible);
     }
 
     // Método para agregar una función no estática
@@ -177,6 +252,14 @@ public class Estructura {
             String retornoAsignado = funcion.getRetornoAsignado();
 
             if (tipoRetorno != null && retornoAsignado != null) {
+                if (retornoAsignado.equals("IDENTIFICADOR")) {
+                    //verificar si la variable esta declarada
+                    //verificar si el tipo de dato es el correcto
+
+                    if (identificadorDeclarado(funcion)) {
+                        continue;
+                    }
+                }
                 if (tipoRetorno.equals(retornoAsignado)) {
                     return false;
                 } else {
@@ -279,7 +362,7 @@ public class Estructura {
         for (Variable usada : variablesEnUso) {
             boolean declarada = false;
             for (Variable declaradaVar : variablesDeclaradas) {
-                if (esMismaVariable(usada,declaradaVar)) {
+                if (esMismaVariable(usada, declaradaVar)) {
                     declarada = true;
                     break;
                 }
@@ -299,7 +382,7 @@ public class Estructura {
 
         for (Variable usada : variablesEnUso) {
             for (Variable declaradaVar : variablesDeclaradas) {
-                if (esMismaVariable(usada,declaradaVar)) {
+                if (esMismaVariable(usada, declaradaVar)) {
                     if (usada.getTipoDato().equals(declaradaVar.getTipoDato())) {
                         break;
                     } else {
@@ -314,15 +397,15 @@ public class Estructura {
         }
 
     }
-    
-    public static boolean esMismaVariable(Variable varUsada, Variable varDeclarada){
-        if(varUsada.getNombreVariable().equals(varDeclarada.getNombreVariable()) && 
-                varUsada.getRangoInicial() == varDeclarada.getRangoInicial() &&
-                varUsada.getRangoFinal() == varDeclarada.getRangoFinal()){
+
+    public static boolean esMismaVariable(Variable varUsada, Variable varDeclarada) {
+        if (varUsada.getNombreVariable().equals(varDeclarada.getNombreVariable())
+                && varUsada.getRangoInicial() == varDeclarada.getRangoInicial()
+                && varUsada.getRangoFinal() == varDeclarada.getRangoFinal()) {
             return true;
-        } else if (varUsada.getNombreVariable().equals(varDeclarada.getNombreVariable()) && 
-                varDeclarada.getRangoInicial() == 0 &&
-                varDeclarada.getRangoFinal() == 0){
+        } else if (varUsada.getNombreVariable().equals(varDeclarada.getNombreVariable())
+                && varDeclarada.getRangoInicial() == 0
+                && varDeclarada.getRangoFinal() == 0) {
             return true;
         }
         return false;
@@ -331,10 +414,44 @@ public class Estructura {
     // ==========================LLAMADA A FUNCIONES
     public static void agregarLlamadaFuncion(LlamadaFuncion llamadaFuncion) {
         if (llamadaFuncion != null) {
+            verificarParametroIdentificador(llamadaFuncion);
             llamadasFunciones.add(llamadaFuncion);
             System.out.println("Llamada a función agregada: " + llamadaFuncion.getNombre());
         } else {
             System.out.println("Error: La llamada a función no puede ser nula.");
+        }
+    }
+
+    public static void verificarParametroIdentificador(LlamadaFuncion llamadaFuncion) {
+        for (Map.Entry<String, String> entry : llamadaFuncion.getParametros().entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if ("IDENTIFICADOR".equals(value)) {
+                System.out.println("La clave correspondiente al valor 'IDENTIFICADOR' es: " + key);
+                variableDeclarada(llamadaFuncion, key, value);
+            }
+        }
+
+    }
+
+    public static void variableDeclarada(LlamadaFuncion llamadaFuncion, String key, String value) {
+        boolean noEncontrada = true;
+        for (Variable variable : variablesDeclaradas) {
+            if (variable.getNombreVariable().equals(key)
+                    && variable.getRangoInicial() <= llamadaFuncion.getFilaInicial()
+                    && variable.getRangoFinal() >= llamadaFuncion.getFilaInicial()) {
+                llamadaFuncion.getParametros().replace(key, value, variable.getTipoDato());
+                noEncontrada = false;
+                break;
+            } 
+        }
+        if (noEncontrada) {
+            ErrorLlamadaFuncion error = new ErrorLlamadaFuncion();
+            error.setMensajeError("Llamada a función en fila " + llamadaFuncion.getFilaInicial() + " con parametro: " + key
+                    + ", no esta declarada la variable");
+            error.setLlamadaErronea(llamadaFuncion);
+            erroresLlamadaFuncion.add(error);
         }
     }
 
@@ -486,21 +603,39 @@ public class Estructura {
     public static void verificarContextoDeLlamada() {
         for (LlamadaFuncion llamada : llamadasFunciones) {
             if (llamada.getContexto().equals("estatico")) {
-                if (!llamada.getContexto().equals(llamada.getContextoFuncionLlamada())) {
+                if (!llamada.getContexto().equals(llamada.getContextoFuncionLlamada()) && !llamada.getContextoFuncionLlamada().equals("indefinida")) {
                     ErrorLlamadaFuncion error = new ErrorLlamadaFuncion();
                     error.setMensajeError("Error: La llamada '" + llamada.getNombre()
                             + "' es un metodo No estatico y actualmente estas en un contexto estatico");
                     error.setLlamadaErronea(llamada);
                     erroresLlamadaFuncion.add(error);
+                } else if (llamada.getContextoFuncionLlamada().equals("indefinida")) {
+                    ErrorLlamadaFuncion error = new ErrorLlamadaFuncion();
+                    error.setMensajeError("Error: La llamada '" + llamada.getNombre()
+                            + "' esta en un contexto estatico, pero la funcion no existe");
+                    error.setLlamadaErronea(llamada);
+                    erroresLlamadaFuncion.add(error);
                 }
-            } else {
-                if (!llamada.getContexto().equals(llamada.getContextoFuncionLlamada())) {
+            } else if (llamada.getContexto().equals("no estatico")) {
+                if (!llamada.getContexto().equals(llamada.getContextoFuncionLlamada()) && !llamada.getContextoFuncionLlamada().equals("indefinida")) {
                     ErrorLlamadaFuncion error = new ErrorLlamadaFuncion();
                     error.setMensajeError("Error: La llamada '" + llamada.getNombre()
                             + "' es un metodo Estatico y actualmente estas en un contexto NO estatico");
                     error.setLlamadaErronea(llamada);
                     erroresLlamadaFuncion.add(error);
+                } else if (llamada.getContextoFuncionLlamada().equals("indefinida")) {
+                    ErrorLlamadaFuncion error = new ErrorLlamadaFuncion();
+                    error.setMensajeError("Error: La llamada '" + llamada.getNombre()
+                            + "' esta en un contexto no estatico, pero la funcion no existe");
+                    error.setLlamadaErronea(llamada);
+                    erroresLlamadaFuncion.add(error);
                 }
+            } else {
+                ErrorLlamadaFuncion error = new ErrorLlamadaFuncion();
+                error.setMensajeError("Error: La llamada '" + llamada.getNombre()
+                        + "' No tiene un contexto Definido");
+                error.setLlamadaErronea(llamada);
+                erroresLlamadaFuncion.add(error);
             }
         }
     }
@@ -564,36 +699,35 @@ public class Estructura {
     public static List<ErrorLlamadaFuncion> getErroresLlamadaFuncion() {
         return erroresLlamadaFuncion;
     }
-    
+
     public static List<String> obtenerMensajesDeErrores() {
-    List<String> mensajesErrores = new ArrayList<>();
+        List<String> mensajesErrores = new ArrayList<>();
 
-    // Recorrer errores de variables
-    for (ErrorVariable error : erroresVariables) {
-        mensajesErrores.add(error.toString());
-        mensajesErrores.add("\n");
+        // Recorrer errores de variables
+        for (ErrorVariable error : erroresVariables) {
+            mensajesErrores.add(error.toString());
+            mensajesErrores.add("\n");
+        }
+
+        // Recorrer errores de funciones estáticas
+        for (ErrorFuncionEstatica error : erroresFuncionesEstaticas) {
+            mensajesErrores.add(error.toString());
+            mensajesErrores.add("\n");
+        }
+
+        // Recorrer errores de funciones no estáticas
+        for (ErrorFuncionNoEstatica error : erroresFuncionesNoEstaticas) {
+            mensajesErrores.add(error.toString());
+            mensajesErrores.add("\n");
+        }
+
+        // Recorrer errores de llamadas a funciones
+        for (ErrorLlamadaFuncion error : erroresLlamadaFuncion) {
+            mensajesErrores.add(error.toString());
+            mensajesErrores.add("\n");
+        }
+
+        return mensajesErrores;
     }
-
-    // Recorrer errores de funciones estáticas
-    for (ErrorFuncionEstatica error : erroresFuncionesEstaticas) {
-        mensajesErrores.add(error.toString());
-        mensajesErrores.add("\n");
-    }
-
-    // Recorrer errores de funciones no estáticas
-    for (ErrorFuncionNoEstatica error : erroresFuncionesNoEstaticas) {
-        mensajesErrores.add(error.toString());
-        mensajesErrores.add("\n");
-    }
-
-    // Recorrer errores de llamadas a funciones
-    for (ErrorLlamadaFuncion error : erroresLlamadaFuncion) {
-        mensajesErrores.add(error.toString());
-        mensajesErrores.add("\n");
-    }
-
-    return mensajesErrores;
-}
-
 
 }

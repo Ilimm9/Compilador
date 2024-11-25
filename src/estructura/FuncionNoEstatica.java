@@ -21,6 +21,8 @@ public class FuncionNoEstatica {
     private int filaInicial;
     private int filaFinal;
     private int columna;
+    
+    private String nombreIdentificadorRetorno;
 
     public boolean isRetorno() {
         return retorno;
@@ -94,6 +96,14 @@ public class FuncionNoEstatica {
     public void setFilaFinal(int filaFinal) {
         this.filaFinal = filaFinal;
     }
+
+    public String getNombreIdentificadorRetorno() {
+        return nombreIdentificadorRetorno;
+    }
+
+    public void setNombreIdentificadorRetorno(String nombreIdentificadorRetorno) {
+        this.nombreIdentificadorRetorno = nombreIdentificadorRetorno;
+    }
     
     
 
@@ -107,7 +117,7 @@ public class FuncionNoEstatica {
 
     @Override
     public String toString() {
-        return "FuncionNoEstatica{" + "nombre=" + nombre + ", retorno=" + retorno + ", parametros=" + parametros + ", tipoRetorno=" + tipoRetorno + ", retornoAsignado=" + retornoAsignado + ", filaInicial=" + filaInicial + ", filaFinal=" + filaFinal + ", columna=" + columna + '}';
+        return "FuncionNoEstatica{" + "nombre=" + nombre + ", retorno=" + retorno + ", parametros=" + parametros + ", tipoRetorno=" + tipoRetorno + ", retornoAsignado=" + retornoAsignado + ", filaInicial=" + filaInicial + ", filaFinal=" + filaFinal + ", columna=" + columna + ", nombreIdentificadorRetorno=" + nombreIdentificadorRetorno + '}';
     }
 
     

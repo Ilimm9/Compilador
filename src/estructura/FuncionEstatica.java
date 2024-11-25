@@ -22,6 +22,8 @@ public class FuncionEstatica {
     private int filaFinal;
     private int columna;
     
+    private String nombreIdentificadorRetorno;
+    
 
     public boolean isRetorno() {
         return retorno;
@@ -104,11 +106,19 @@ public class FuncionEstatica {
         this.columna = columna;
     }
 
-    @Override
-    public String toString() {
-        return "FuncionEstatica{" + "nombre=" + nombre + ", retorno=" + retorno + ", parametros=" + parametros + ", tipoRetorno=" + tipoRetorno + ", retornoAsignado=" + retornoAsignado + ", filaInicial=" + filaInicial + ", filaFinal=" + filaFinal + ", columna=" + columna + '}';
+    public String getNombreIdentificadorRetorno() {
+        return nombreIdentificadorRetorno;
     }
 
+    public void setNombreIdentificadorRetorno(String nombreIdentificadorRetorno) {
+        this.nombreIdentificadorRetorno = nombreIdentificadorRetorno;
+    }
+
+    @Override
+    public String toString() {
+        return "FuncionEstatica{" + "nombre=" + nombre + ", retorno=" + retorno + ", parametros=" + parametros + ", tipoRetorno=" + tipoRetorno + ", retornoAsignado=" + retornoAsignado + ", filaInicial=" + filaInicial + ", filaFinal=" + filaFinal + ", columna=" + columna + ", nombreIdentificadorRetorno=" + nombreIdentificadorRetorno + '}';
+    }
+   
     
     
 }

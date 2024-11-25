@@ -95,6 +95,9 @@ continue
 main
     { return token(yytext(), "MAIN", yyline, yycolumn); }
 
+\?    { return token(yytext(), "PREGUNTA", yyline, yycolumn); }
+\:    { return token(yytext(), "DOS_PUNTOS", yyline, yycolumn); }
+
 
 
 "System" 

@@ -257,11 +257,11 @@ public class Compilador extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(rootPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(rootPanelLayout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addContainerGap(8, Short.MAX_VALUE))
+                        .addComponent(jScrollPane2))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 391, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(19, Short.MAX_VALUE))
         );
 
         getContentPane().add(rootPanel);
@@ -363,14 +363,14 @@ public class Compilador extends javax.swing.JFrame {
         //Operaciones Anidados Relacional
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             // Grupo para expresiones relacionales
-            gramatica.group("EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR) OPERADOR_RELACIONAL (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR)");
+            gramatica.group("EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR) OPERADOR_RELACIONAL (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR | TRUE | FALSE)");
             gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A EXP_RELACIONAL PARENTESIS_C) | EXP_RELACIONAL ");
         });
 
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             gramatica.group("EXP_ARIMETICA", "PARENTESIS_A EXP_ARITMETICA PARENTESIS_C ");
             gramatica.group("EXP_ARITMETICA", "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA) (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA)  ");
-            gramatica.group("EXP_ARIMETICA", " (EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) EXP_ARITMETICA  ");
+            gramatica.group("EXP_ARITMETICA", " (EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) EXP_ARITMETICA  ");
             gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL  EXP_ARIMETICA");
         });
 
@@ -430,43 +430,55 @@ public class Compilador extends javax.swing.JFrame {
 
         gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
                 + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
+        
+        gramatica.group("OPERADOR_TERMINARIO", "");
 
-        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC)* LLAVE_C");
-//        gramatica.group("BLOQUE", "(CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO)");
+        gramatica.group("BLOQUE", "LLAVE_A  LLAVE_C");
+        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC )* LLAVE_C");
 
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-            gramatica.group("CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL) BLOQUE");
-            gramatica.group("ELSE IF", "ELSE CONDICIONAL_IF");
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_LOGICA| EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)? BLOQUE");
+            gramatica.group("ELSE_IF", "ELSE CONDICIONAL_IF");
             gramatica.group("ELSE", "ELSE BLOQUE");
-            gramatica.group("CONDICIONAL_IF_ELSE", "CONDICIONAL_IF ELSE");
+            gramatica.group("CONDICIONAL_IF", "CONDICIONAL_IF (ELSE_IF)* (ELSE)? ");
+            
+            //errores del if
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_LOGICA| EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)?  ", true,
+                3, "Error sintáctico {}: falta bloque en la declaración if [# , %]");
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_ARIMETICA) (PARENTESIS_C)? BLOQUE", true, 
+                    20, "Error sintactico {}: Bloque if no declarado correctamente");
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)?  (PARENTESIS_C)? BLOQUE", true, 
+                    21, "Error sintactico {}: Bloque if no declarado correctamente");
 
         });
-        // Error para if sin un bloque
-        gramatica.group("ERROR_CONDICIONAL_IF", "IF (EXP_LOGICA| EXP_RELACIONAL)  ", true,
-                3, "Error sintáctico {}: falta bloque en la declaración if [# , %]");
+        
 
         /* Estructura WHILE */
-        gramatica.group("BUCLE_WHILE", "WHILE (PARENTESIS_A)? (EXP_LOGICA | EXP_RELACIONAL) (PARENTESIS_C)? BLOQUE");
+        gramatica.group("BUCLE_WHILE", "WHILE (PARENTESIS_A)? (EXP_LOGICA | EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)? BLOQUE");
 
         gramatica.group("BUCLE_WHILE", "WHILE   BLOQUE", true,
                 4, "Error sintáctico: falta declaración de while [# , %]");
 
         //Bucle For
         gramatica.group("BUCLE_FOR", "FOR PARENTESIS_A  VAR_ENTERO "
-                + " EXP_RELACIONAL PUNTO_COMA (POS | PRE) PARENTESIS_C BLOQUE ");
-
-        //funcion main
+                + " (EXP_LOGICA | EXP_RELACIONAL) PUNTO_COMA (POS | PRE) PARENTESIS_C BLOQUE ");
         gramatica.group("STRING_ARR", "DATO_CADENA CORCHETE_A CORCHETE_C");
         
         
+        //BLOQUES DE CODIGO
+        gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC |"
+                + " CONDICIONAL_IF | BUCLE_WHILE ] BUCLE_FOR )* LLAVE_C");
+        gramatica.group("BLOQUE_RETORNO", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC |"
+                + " CONDICIONAL_IF | BUCLE_WHILE ] BUCLE_FOR  )* "
+                + " RETURN (NUMERO_ENTERO| CADENA_TEXTO | NUMERO_FLOTANTE | TRUE | FALSE | IDENTIFICADOR |"
+                + " EXP_RELACIONAL | EXP_ARIMETICA | EXP_LOGICA ) PUNTO_COMA LLAVE_C");
+        
 
+        //funcion main
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
                 + " PARENTESIS_A STRING_ARR IDENTIFICADOR PARENTESIS_C BLOQUE ", true, identProd);
 
         //funcion normal
-        gramatica.group("BLOQUE_RETORNO", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC)* "
-                + " RETURN (NUMERO_ENTERO| CADENA_TEXTO | NUMERO_FLOTANTE | TRUE | FALSE | IDENTIFICADOR) PUNTO_COMA LLAVE_C");
-
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             gramatica.group("PARAMETROS", "PARENTESIS_A (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR ) "
                     + "( (COMA) (DEC_ENTERO | DEC_FLOTANTE | DEC_CADENA | DEC_BOOL | DEC_CHAR))* PARENTESIS_C", true, identProd);
@@ -505,11 +517,16 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("FUNCION_CONST_PARAMS", " PUBLIC IDENTIFICADOR PARAMETROS BLOQUE ", true, identProd);
         gramatica.group("FUNCION_CONST_NOPARAMS", "PUBLIC IDENTIFICADOR PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
 
+        
         //clases
         gramatica.group("BLOQUE_CLASE", " LLAVE_A ( FUNCION_NOPARAMS | FUNCION_NOPARAMS_RETORNO | FUNCION_PARAMS | "
                 + "FUNCION_PARAMS_RETORNO | FUNCION_EST_NOPARAMS | FUNCION_EST_NOPARAMS_RETORNO |FUNCION_EST_PARAMS | "
-                + " FUNCION_EST_PARAMS_RETORNO  )+ LLAVE_C ", true, identProd);
+                + " FUNCION_EST_PARAMS_RETORNO | FUNCION_MAIN )+ LLAVE_C ", true, identProd);
         gramatica.group("CLASE", " PUBLIC CLASS IDENTIFICADOR BLOQUE_CLASE", true, identProd);
+        
+        
+        
+        
 
         //llamada a funciones
 //        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
@@ -628,6 +645,14 @@ public class Compilador extends javax.swing.JFrame {
                     paramType = paramType.substring(5);
                     funcionEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
+                if(funcionEstatica.getRetornoAsignado().equals("IDENTIFICADOR")){
+                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3) );
+                    funcionEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
+                }
+//                System.out.println("name: " + production.getName());
+//                    System.out.println("name: " + production.getTokens());
+//                    System.out.println("name: " + production.toString());
+//                    System.out.println("name: " + production.tokenRank(0));
                 Estructura.agregarFuncionEstatica(funcionEstatica);
 
             }
@@ -654,6 +679,9 @@ public class Compilador extends javax.swing.JFrame {
                 funcionEstatica.setFilaInicial(production.getLine());
                 funcionEstatica.setFilaFinal(production.getFinalLine());
                 funcionEstatica.setColumna(production.getColumn());
+                if((production.lexicalCompRank(production.getSizeTokens() - 3)).equals("IDENTIFICADOR")){
+                    funcionEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
+                }
                 Estructura.agregarFuncionEstatica(funcionEstatica);
 
             }
@@ -708,6 +736,10 @@ public class Compilador extends javax.swing.JFrame {
                     paramType = paramType.substring(5);
                     funcionNoEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
+                if(funcionNoEstatica.getRetornoAsignado().equals("IDENTIFICADOR")){
+                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3) );
+                    funcionNoEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
+                }
                 Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
 
             }
@@ -734,6 +766,10 @@ public class Compilador extends javax.swing.JFrame {
                 funcionNoEstatica.setFilaInicial(production.getLine());
                 funcionNoEstatica.setFilaFinal(production.getFinalLine());
                 funcionNoEstatica.setColumna(production.getColumn());
+                if(funcionNoEstatica.getRetornoAsignado().equals("IDENTIFICADOR")){
+                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3) );
+                    funcionNoEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
+                }
                 Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
 
             }
