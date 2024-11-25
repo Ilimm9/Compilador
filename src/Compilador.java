@@ -446,7 +446,7 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC )* LLAVE_C");
 
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_LOGICA| EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)? BLOQUE");
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_LOGICA| EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)? BLOQUE", true, identProd);
             gramatica.group("ELSE_IF", "ELSE CONDICIONAL_IF");
             gramatica.group("ELSE", "ELSE BLOQUE");
             gramatica.group("CONDICIONAL_IF", "CONDICIONAL_IF (ELSE_IF)* (ELSE)? ");
@@ -841,6 +841,8 @@ public class Compilador extends javax.swing.JFrame {
             }
             verificarConcatenacion(production, Estructura.getVariablesDeclaradas());
 
+            verificarDeclaracionVariableIf(production);
+
         }
 
         Estructura.verificarVariablesUsadas();
@@ -1092,6 +1094,37 @@ public class Compilador extends javax.swing.JFrame {
 //        }
     }
 
+    private void verificarDeclaracionVariableIf(Production production) {
+        String productionName = production.getName();
+        String nombreVariableIf = production.lexemeRank(2);
+        if (productionName.equals("CONDICIONAL_IF")) {
+            boolean declarada = false;
+            boolean compatible = false;
+            for (Variable variable : Estructura.getVariablesDeclaradas()) {
+                if (variable.getNombreVariable().equals(nombreVariableIf)) {
+                    if (variable.getTipoDato().equals("BOOL")) {
+                        compatible = true;
+                    }
+                    declarada = true;
+                    break;
+                }
+            }
+            if (!declarada) {
+                errors.add(new ErrorLSSL(
+                        12, "× Error semántico [#, %] : El identificador del condicional no esta Declarado.  ", production, true
+                //                            13, "× Error semántico: el identificador usado en la concatenacion no está declarado.", production, true
+                ));
+            }
+            if (!compatible) {
+                errors.add(new ErrorLSSL(
+                        12, "× Error semántico [#, %] : El identificador del condicional no es un tipo compatible.  ", production, true
+                //                            13, "× Error semántico: el identificador usado en la concatenacion no está declarado.", production, true
+                ));
+            }
+
+        }
+    }
+
     // Función para verificar expresiones de concatenación
     private void verificarConcatenacion(Production production, List<Variable> variablesDeclaradas) {
         String productionName = production.getName();
@@ -1169,29 +1202,52 @@ public class Compilador extends javax.swing.JFrame {
 
     }
 
-    // Método auxiliar para verificar compatibilidad de tipos
-    private boolean isCompatibleType(String expectedType, String assignedType) {
+    private static boolean isCompatibleType(String expectedType, String assignedType) {
+        System.out.println("assignedType = " + assignedType);
+        System.out.println("expectedType = " + expectedType);
         // Ejemplo simple de compatibilidad
         switch (expectedType) {
             case "ENTERO":
             case "NUMERO_ENTERO":
-                return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("IDENTIFICADOR");
+                return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("ENTERO");
             case "FLOTANTE":
             case "NUMERO_FLOTANTE":
-                return assignedType.equals("NUMERO_FLOTANTE") || assignedType.equals("IDENTIFICADOR");
+                return assignedType.equals("NUMERO_FLOTANTE") || assignedType.equals("FLOTANTE");
             case "CHAR":
             case "CARACTER":
-                return assignedType.equals("CARACTER") || assignedType.equals("IDENTIFICADOR");
+                return assignedType.equals("CARACTER") || assignedType.equals("CHAR");
             case "BOOL":
-                return assignedType.equals("TRUE") || assignedType.equals("FALSE") || assignedType.equals("IDENTIFICADOR");
+                return assignedType.equals("TRUE") || assignedType.equals("FALSE") || assignedType.equals("BOOL");
             case "CADENA":
             case "CADENA_TEXTO":
-                return assignedType.equals("CADENA_TEXTO") || assignedType.equals("IDENTIFICADOR");
+                return assignedType.equals("CADENA_TEXTO") || assignedType.equals("CADENA");
             default:
                 return false;
         }
     }
 
+    // Método auxiliar para verificar compatibilidad de tipos
+//    private boolean isCompatibleType(String expectedType, String assignedType) {
+//        // Ejemplo simple de compatibilidad
+//        switch (expectedType) {
+//            case "ENTERO":
+//            case "NUMERO_ENTERO":
+//                return assignedType.equals("NUMERO_ENTERO") || assignedType.equals("IDENTIFICADOR");
+//            case "FLOTANTE":
+//            case "NUMERO_FLOTANTE":
+//                return assignedType.equals("NUMERO_FLOTANTE") || assignedType.equals("IDENTIFICADOR");
+//            case "CHAR":
+//            case "CARACTER":
+//                return assignedType.equals("CARACTER") || assignedType.equals("IDENTIFICADOR");
+//            case "BOOL":
+//                return assignedType.equals("TRUE") || assignedType.equals("FALSE") || assignedType.equals("IDENTIFICADOR");
+//            case "CADENA":
+//            case "CADENA_TEXTO":
+//                return assignedType.equals("CADENA_TEXTO") || assignedType.equals("IDENTIFICADOR");
+//            default:
+//                return false;
+//        }
+//    }
     private boolean isCompatibleType(String expectedType, String assignedType, String nombreParam, Production production, HashMap<String, String> declaredVariables) {
         // Ejemplo simple de compatibilidad
         if (assignedType.equals("IDENTIFICADOR")) {
