@@ -425,17 +425,21 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("ERR_VAR_CADENA", "(DEC_CADENA (ASIG_ENTERO | ASIG_CHAR |ASIG_FLOTANTE | ASIG_BOOL)) (PUNTO_COMA)? ", true,
                 34, "Error Semantico {}: asignacion invalida a un tipo cadena [# , %]");
 
-        // Definir System.out.println
-        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C PUNTO_COMA");
-        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
-                2, "Error sintáctico: falta punto y coma [# , %]");
-
         gramatica.group("POS", "(IDENTIFICADOR DECREMENTAL) | (IDENTIFICADOR INCREMENTAL)");
         gramatica.group("PRE", "(INCREMENTAL IDENTIFICADOR) | (DECREMENTAL IDENTIFICADOR)");
 
         gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
                 + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
-        
+
+        //=========CONCATENAR
+        gramatica.group("EXP_CONCATENACION", " (CADENA_TEXTO | IDENTIFICADOR |NUMERO_ENTERO|NUMERO_FLOTANTE| EXP_CONCATENACION) SUMA (CADENA_TEXTO |NUMERO_ENTERO|NUMERO_FLOTANTE| IDENTIFICADOR | EXP_CONCATENACION)+ ", true, identProd
+        );
+
+        // Definir System.out.println
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR |EXP_CONCATENACION) PARENTESIS_C PUNTO_COMA");
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
+                2, "Error sintáctico: falta punto y coma [# , %]");
+
         gramatica.group("OPERADOR_TERMINARIO", "");
 
         gramatica.group("BLOQUE", "LLAVE_A  LLAVE_C");
@@ -446,17 +450,17 @@ public class Compilador extends javax.swing.JFrame {
             gramatica.group("ELSE_IF", "ELSE CONDICIONAL_IF");
             gramatica.group("ELSE", "ELSE BLOQUE");
             gramatica.group("CONDICIONAL_IF", "CONDICIONAL_IF (ELSE_IF)* (ELSE)? ");
-            
+
             //errores del if
             gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_LOGICA| EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)?  ", true,
-                3, "Error sintáctico {}: falta bloque en la declaración if [# , %]");
-            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_ARIMETICA) (PARENTESIS_C)? BLOQUE", true, 
+                    3, "Error sintáctico {}: falta bloque en la declaración if [# , %]");
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_ARIMETICA) (PARENTESIS_C)? BLOQUE", true,
                     20, "Error sintactico {}: Bloque if no declarado correctamente");
-            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)?  (PARENTESIS_C)? BLOQUE", true, 
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)?  (PARENTESIS_C)? BLOQUE", true,
                     21, "Error sintactico {}: Bloque if no declarado correctamente");
 
         });
-        
+
 
         /* Estructura WHILE */
         gramatica.group("BUCLE_WHILE", "WHILE (PARENTESIS_A)? (EXP_LOGICA | EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)? BLOQUE");
@@ -468,8 +472,7 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("BUCLE_FOR", "FOR PARENTESIS_A  VAR_ENTERO "
                 + " (EXP_LOGICA | EXP_RELACIONAL) PUNTO_COMA (POS | PRE) PARENTESIS_C BLOQUE ");
         gramatica.group("STRING_ARR", "DATO_CADENA CORCHETE_A CORCHETE_C");
-        
-        
+
         //BLOQUES DE CODIGO
         gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC |"
                 + " CONDICIONAL_IF | BUCLE_WHILE ] BUCLE_FOR )* LLAVE_C");
@@ -477,7 +480,6 @@ public class Compilador extends javax.swing.JFrame {
                 + " CONDICIONAL_IF | BUCLE_WHILE ] BUCLE_FOR  )* "
                 + " RETURN (NUMERO_ENTERO| CADENA_TEXTO | NUMERO_FLOTANTE | TRUE | FALSE | IDENTIFICADOR |"
                 + " EXP_RELACIONAL | EXP_ARIMETICA | EXP_LOGICA ) PUNTO_COMA LLAVE_C");
-        
 
         //funcion main
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
@@ -522,16 +524,11 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("FUNCION_CONST_PARAMS", " PUBLIC IDENTIFICADOR PARAMETROS BLOQUE ", true, identProd);
         gramatica.group("FUNCION_CONST_NOPARAMS", "PUBLIC IDENTIFICADOR PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
 
-        
         //clases
         gramatica.group("BLOQUE_CLASE", " LLAVE_A ( FUNCION_NOPARAMS | FUNCION_NOPARAMS_RETORNO | FUNCION_PARAMS | "
                 + "FUNCION_PARAMS_RETORNO | FUNCION_EST_NOPARAMS | FUNCION_EST_NOPARAMS_RETORNO |FUNCION_EST_PARAMS | "
                 + " FUNCION_EST_PARAMS_RETORNO | FUNCION_MAIN )+ LLAVE_C ", true, identProd);
         gramatica.group("CLASE", " PUBLIC CLASS IDENTIFICADOR BLOQUE_CLASE", true, identProd);
-        
-        
-        
-        
 
         //llamada a funciones
 //        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
@@ -580,11 +577,11 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.show();
 
     }
-    
-    public void retornarExpresion(Production production){
+
+    public void retornarExpresion(Production production) {
         production.lexemeRank(production.getSizeTokens() - 3);
-        for(int i = 0; i < production.getSizeTokens(); i++){
-            
+        for (int i = 0; i < production.getSizeTokens(); i++) {
+
         }
     }
 
@@ -657,8 +654,8 @@ public class Compilador extends javax.swing.JFrame {
                     paramType = paramType.substring(5);
                     funcionEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
-                if(funcionEstatica.getRetornoAsignado().equals("IDENTIFICADOR")){
-                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3) );
+                if (funcionEstatica.getRetornoAsignado().equals("IDENTIFICADOR")) {
+                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3));
                     funcionEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
                 }
 //                System.out.println("name: " + production.getName());
@@ -691,7 +688,7 @@ public class Compilador extends javax.swing.JFrame {
                 funcionEstatica.setFilaInicial(production.getLine());
                 funcionEstatica.setFilaFinal(production.getFinalLine());
                 funcionEstatica.setColumna(production.getColumn());
-                if((production.lexicalCompRank(production.getSizeTokens() - 3)).equals("IDENTIFICADOR")){
+                if ((production.lexicalCompRank(production.getSizeTokens() - 3)).equals("IDENTIFICADOR")) {
                     funcionEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
                 }
                 Estructura.agregarFuncionEstatica(funcionEstatica);
@@ -748,8 +745,8 @@ public class Compilador extends javax.swing.JFrame {
                     paramType = paramType.substring(5);
                     funcionNoEstatica.agregarParametro(production.lexemeRank(i + 1), paramType);
                 }
-                if(funcionNoEstatica.getRetornoAsignado().equals("IDENTIFICADOR")){
-                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3) );
+                if (funcionNoEstatica.getRetornoAsignado().equals("IDENTIFICADOR")) {
+                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3));
                     funcionNoEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
                 }
                 Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
@@ -778,8 +775,8 @@ public class Compilador extends javax.swing.JFrame {
                 funcionNoEstatica.setFilaInicial(production.getLine());
                 funcionNoEstatica.setFilaFinal(production.getFinalLine());
                 funcionNoEstatica.setColumna(production.getColumn());
-                if(funcionNoEstatica.getRetornoAsignado().equals("IDENTIFICADOR")){
-                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3) );
+                if (funcionNoEstatica.getRetornoAsignado().equals("IDENTIFICADOR")) {
+                    System.out.println("producion identificador => " + production.lexemeRank(production.getSizeTokens() - 3));
                     funcionNoEstatica.setNombreIdentificadorRetorno(production.lexemeRank(production.getSizeTokens() - 3));
                 }
                 Estructura.agregarFuncionNoEstatica(funcionNoEstatica);
@@ -842,6 +839,7 @@ public class Compilador extends javax.swing.JFrame {
                 llamadaFuncion.setColumna(production.getColumn());
                 Estructura.agregarLlamadaFuncion(llamadaFuncion);
             }
+            verificarConcatenacion(production, Estructura.getVariablesDeclaradas());
 
         }
 
@@ -1092,6 +1090,63 @@ public class Compilador extends javax.swing.JFrame {
 //                }
 //            }
 //        }
+    }
+
+    // Función para verificar expresiones de concatenación
+    private void verificarConcatenacion(Production production, List<Variable> variablesDeclaradas) {
+        String productionName = production.getName();
+
+        if (productionName.equals("EXP_CONCATENACION")) {
+            String leftOperand = production.lexicalCompRank(0);
+            if (!isValidOperand(leftOperand)) {
+                errors.add(new ErrorLSSL(
+                        9, "× Error semántico: el operando izquierdo no es válido en la concatenación. Esperado 'CADENA_TEXTO', 'IDENTIFICADOR' . [#, %]",
+                        production, true
+                ));
+            }
+//            String operator = production.lexemeRank(2);
+//            if (!operator.equals("+")) {
+//                errors.add(new ErrorLSSL(
+//                        10, "× Error semántico: operador inválido en concatenación. Se esperaba '+'.", production, true
+//                ));
+//            }
+            String rightOperand = production.lexicalCompRank(2);
+            if (!isValidOperand(rightOperand)) {
+                errors.add(new ErrorLSSL(
+                        11, "× Error semántico: el operando derecho no es válido en la concatenación. Esperado cadena de texto o identificador.",
+                        production, true
+                ));
+            }
+            // Validar que identificadores dercho estén declarados
+            if (leftOperand.equals("IDENTIFICADOR") || rightOperand.equals("IDENTIFICADOR")) {
+                boolean valor = false;
+                for (Variable variable : variablesDeclaradas) {
+
+                    if (variable.getNombreVariable().equals(production.lexemeRank(0)) || variable.getNombreVariable().equals(production.lexemeRank(2))) {
+
+                        valor = true;
+                        break;
+                    }
+
+                }
+                if (!valor) {
+                    errors.add(new ErrorLSSL(
+                            12, "× Error semántico: el identificador  no está declarado.  [#, %]", production, true
+                    //                            13, "× Error semántico: el identificador usado en la concatenacion no está declarado.", production, true
+                    ));
+                }
+            }
+//            if (rightOperand.equals("IDENTIFICADOR") && !declaredVariables.containsKey(production.lexemeRank(3))) {
+//                errors.add(new ErrorLSSL(
+//                        13, "× Error semántico: el identificador '" + production.lexemeRank(3) + "' no está declarado.", production, true
+//                ));
+//            }
+        }
+    }
+
+    // Función auxiliar para validar operandos
+    private boolean isValidOperand(String operand) {
+        return operand.equals("CADENA_TEXTO") || operand.equals("IDENTIFICADOR") || operand.equals("EXP_CONCATENACION");
     }
 
     private String regresarTipoDato(String valor) {
