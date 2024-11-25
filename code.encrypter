@@ -1,2 +1,13 @@
-int valor = (3 + 2);
-boolean banderal = (3 > 2) && (2 < 3);
+public class Principal{
+
+public static void main(String[] args){
+int valor = 3;
+int a = 2;
+sumar(a, valor);
+}
+public static void  sumar(int valor, int valor2) {
+
+}
+
+
+}

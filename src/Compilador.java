@@ -365,12 +365,16 @@ public class Compilador extends javax.swing.JFrame {
             // Grupo para expresiones relacionales
             gramatica.group("EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR) OPERADOR_RELACIONAL (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR | TRUE | FALSE)");
             gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A EXP_RELACIONAL PARENTESIS_C) | EXP_RELACIONAL ");
+            gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A)? EXP_RELACIONAL (OPERADOR_RELACIONAL)? (EXP_RELACIONAL)+ (PARENTESIS_C)? ");
         });
 
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-            gramatica.group("EXP_ARIMETICA", "PARENTESIS_A EXP_ARITMETICA PARENTESIS_C ");
-            gramatica.group("EXP_ARITMETICA", "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA) (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA)  ");
-            gramatica.group("EXP_ARITMETICA", " (EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) EXP_ARITMETICA  ");
+            gramatica.group("EXP_ARITMETICA", "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA) "
+                    + "(SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) "
+                    + "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA)  ");
+            gramatica.group("EXP_ARITMETICA", "(PARENTESIS_A EXP_ARITMETICA PARENTESIS_C)  | EXP_ARITMETICA");
+            gramatica.group("EXP_ARITMETICA", "(PARENTESIS_A)? EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (EXP_ARITMETICA)+  (PARENTESIS_C)? ");
+//            gramatica.group("EXP_ARITMETICA", " (EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) EXP_ARITMETICA  ");
             gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL  EXP_ARIMETICA");
         });
 
@@ -378,7 +382,8 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             gramatica.group("EXP_LOGICA", " IDENTIFICADOR OPERADOR_LOGICO IDENTIFICADOR");
             gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
-            gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C | EXP_LOGICA");
+            gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C) | EXP_LOGICA");
+            gramatica.group("EXP_LOGICA", "(PARENTESIS_A)? EXP_LOGICA (OPERADOR_LOGICO) (EXP_LOGICA)+ (PARENTESIS_C)? ");
         });
 
         gramatica.group("DEC_ENTERO", "DATO_ENTERO IDENTIFICADOR", true, identProd);
@@ -574,6 +579,13 @@ public class Compilador extends javax.swing.JFrame {
         System.out.println("Console.log('imprimiendo producciones'");
         gramatica.show();
 
+    }
+    
+    public void retornarExpresion(Production production){
+        production.lexemeRank(production.getSizeTokens() - 3);
+        for(int i = 0; i < production.getSizeTokens(); i++){
+            
+        }
     }
 
     private void semanticAnalysis() {
