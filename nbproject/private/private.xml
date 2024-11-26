@@ -3,8 +3,12 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/Users/ili/Desktop/Semestre%207/Automatas/src/Compilador.java</file>
-            <file>file:/Users/ili/Desktop/Semestre%207/Automatas/src/Lexer.flex</file>
+            <file>file:/C:/Programacion/Escuela/Automatas/Compilador/src/estructura/FuncionEstatica.java</file>
+            <file>file:/C:/Programacion/Escuela/Automatas/Compilador/src/estructura/Retorno.java</file>
+            <file>file:/C:/Programacion/Escuela/Automatas/Compilador/src/Compilador.java</file>
+            <file>file:/C:/Programacion/Escuela/Automatas/Compilador/src/ExecuteJFlex.java</file>
+            <file>file:/C:/Programacion/Escuela/Automatas/Compilador/src/estructura/Estructura.java</file>
+            <file>file:/C:/Programacion/Escuela/Automatas/Compilador/src/estructura/LlamadaFuncion.java</file>
         </group>
     </open-files>
 </project-private>

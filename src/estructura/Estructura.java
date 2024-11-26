@@ -26,6 +26,7 @@ public class Estructura {
     private static List<Variable> variablesEnUso = new ArrayList<>();
     private static FuncionMain funcionMain = new FuncionMain();
     private static List<LlamadaFuncion> llamadasFunciones = new ArrayList<>();
+    private static List<Retorno> retornos = new ArrayList<>();
 
     private static List<ErrorVariable> erroresVariables = new ArrayList<>();
     private static List<ErrorFuncionEstatica> erroresFuncionesEstaticas = new ArrayList<>();
@@ -645,12 +646,17 @@ public class Estructura {
             }
         }
     }
+    
+    public static void agregarRetorno(Retorno retorno){
+        retornos.add(retorno);
+    }
 
     public static void limpiarListas() {
         funcionMain = new FuncionMain();
         funcionesEstaticas.clear();
         funcionesNoEstaticas.clear();
         llamadasFunciones.clear();
+        retornos.clear();
 
         variablesDeclaradas.clear();
         variablesEnUso.clear();
@@ -706,6 +712,10 @@ public class Estructura {
         return erroresLlamadaFuncion;
     }
 
+    public static List<Retorno> getRetornos() {
+        return retornos;
+    }
+    
     public static List<String> obtenerMensajesDeErrores() {
         List<String> mensajesErrores = new ArrayList<>();
 

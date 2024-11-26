@@ -13,6 +13,7 @@ import estructura.FuncionEstatica;
 import estructura.FuncionMain;
 import estructura.FuncionNoEstatica;
 import estructura.LlamadaFuncion;
+import estructura.Retorno;
 import estructura.Variable;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -376,18 +377,19 @@ public class Compilador extends javax.swing.JFrame {
             gramatica.group("EXP_ARITMETICA", "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA) "
                     + "(SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) "
                     + "(IDENTIFICADOR | NUMERO_ENTERO | NUMERO_FLOTANTE | EXP_ARITMETICA)  ");
-            gramatica.group("EXP_ARITMETICA", "(PARENTESIS_A EXP_ARITMETICA PARENTESIS_C)  | EXP_ARITMETICA");
-            gramatica.group("EXP_ARITMETICA", "(PARENTESIS_A)? EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) (EXP_ARITMETICA)+  (PARENTESIS_C)? ");
+            gramatica.group("EXP_ARITMETICA", "(PARENTESIS_A EXP_ARITMETICA PARENTESIS_C)  | EXP_ARITMETICA" );
+            gramatica.group("EXP_ARITMETICA", "(PARENTESIS_A)? EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) "
+                    + "(EXP_ARITMETICA)+  (PARENTESIS_C)? " );
 //            gramatica.group("EXP_ARITMETICA", " (EXP_ARITMETICA (SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO) EXP_ARITMETICA  ");
-            gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL  EXP_ARIMETICA");
+//            gramatica.group("ASIG_ENTERO", "ASIGNACION_IGUAL  EXP_ARITMETICA");
         });
 
         //Operaciones Anidados Logicas
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
-            gramatica.group("EXP_LOGICA", " IDENTIFICADOR OPERADOR_LOGICO IDENTIFICADOR");
-            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)");
-            gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C) | EXP_LOGICA");
-            gramatica.group("EXP_LOGICA", "(PARENTESIS_A)? EXP_LOGICA (OPERADOR_LOGICO) (EXP_LOGICA)+ (PARENTESIS_C)? ");
+            gramatica.group("EXP_LOGICA", " IDENTIFICADOR OPERADOR_LOGICO IDENTIFICADOR", true, identProd);
+            gramatica.group("EXP_LOGICA", "(EXP_LOGICA | EXP_RELACIONAL) OPERADOR_LOGICO (EXP_LOGICA | EXP_RELACIONAL)", true, identProd);
+            gramatica.group("EXP_LOGICA", "(PARENTESIS_A EXP_LOGICA PARENTESIS_C) | EXP_LOGICA", true, identProd);
+            gramatica.group("EXP_LOGICA", "(PARENTESIS_A)? EXP_LOGICA (OPERADOR_LOGICO) (EXP_LOGICA)+ (PARENTESIS_C)? ", true, identProd);
         });
 
         gramatica.group("DEC_ENTERO", "DATO_ENTERO IDENTIFICADOR", true, identProd);
@@ -447,8 +449,8 @@ public class Compilador extends javax.swing.JFrame {
 
         // Definir System.out.println
         gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A PARENTESIS_C PUNTO_COMA");
-        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR |EXP_CONCATENACION) PARENTESIS_C PUNTO_COMA");
-        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARITMETICA | CADENA_TEXTO | IDENTIFICADOR |EXP_CONCATENACION) PARENTESIS_C PUNTO_COMA");
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARITMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
                 2, "Error sintáctico: falta punto y coma [# , %]");
 
         gramatica.group("OPERADOR_TERMINARIO", "");
@@ -465,7 +467,7 @@ public class Compilador extends javax.swing.JFrame {
             //errores del if
             gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_LOGICA| EXP_RELACIONAL | IDENTIFICADOR) (PARENTESIS_C)?  ", true,
                     3, "Error sintáctico {}: falta bloque en la declaración if [# , %]");
-            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_ARIMETICA) (PARENTESIS_C)? BLOQUE", true,
+            gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)? (EXP_ARITMETICA) (PARENTESIS_C)? BLOQUE", true,
                     20, "Error sintactico {}: Bloque if no declarado correctamente");
             gramatica.group("CONDICIONAL_IF", "IF (PARENTESIS_A)?  (PARENTESIS_C)? BLOQUE", true,
                     21, "Error sintactico {}: Bloque if no declarado correctamente");
@@ -487,10 +489,11 @@ public class Compilador extends javax.swing.JFrame {
         //BLOQUES DE CODIGO
         gramatica.group("BLOQUE", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC |"
                 + " CONDICIONAL_IF | BUCLE_WHILE ] BUCLE_FOR )* LLAVE_C");
+        gramatica.group("RETORNO", "RETURN (NUMERO_ENTERO| CADENA_TEXTO | NUMERO_FLOTANTE | TRUE | FALSE | IDENTIFICADOR |"
+                + " EXP_RELACIONAL | EXP_ARITMETICA | EXP_LOGICA ) PUNTO_COMA", true, identProd);
         gramatica.group("BLOQUE_RETORNO", "LLAVE_A (CONSOLA | VAR_BOOL | VAR_CADENA | VAR_CHAR | VAR_FLOTANTE | VAR_ENTERO| CALL_FUNC |"
                 + " CONDICIONAL_IF | BUCLE_WHILE ] BUCLE_FOR  )* "
-                + " RETURN (NUMERO_ENTERO| CADENA_TEXTO | NUMERO_FLOTANTE | TRUE | FALSE | IDENTIFICADOR |"
-                + " EXP_RELACIONAL | EXP_ARIMETICA | EXP_LOGICA ) PUNTO_COMA LLAVE_C");
+                + " RETORNO LLAVE_C");
 
         //funcion main
         gramatica.group("FUNCION_MAIN", "PUBLIC STATIC VOID MAIN "
@@ -877,6 +880,20 @@ public class Compilador extends javax.swing.JFrame {
             verificarDeclaracionVariableIf(production);
 
         }
+        
+        for(Production production: identProd){
+            String productionName = production.getName();
+            if(productionName.equals("RETORNO")){
+                System.out.println("production.lexemeRank(0,-1) = " + production.lexemeRank(0,-1));
+                Retorno retorno = new Retorno();
+                retorno.setColumna(production.getColumn());
+                retorno.setFila(production.getLine());
+                retorno.setExpresion(recuperarExpresion(production));
+                Estructura.agregarRetorno(retorno);
+            }
+        }
+        
+        
 
         Estructura.verificarVariablesUsadas();
         Estructura.verificarAsignacionVariables();
@@ -937,194 +954,21 @@ public class Compilador extends javax.swing.JFrame {
         Estructura.getErroresLlamadaFuncion().forEach(llamada -> {
             System.out.println(llamada);
         });
+        
+        System.out.println("\nRetorno de Expresiones declaradas");
+        Estructura.getRetornos().forEach(retorno -> {
+            System.out.println(retorno);
+        });
 
-//        System.out.println("Analisis Semantico");
-//
-////        for(Production production: identProd){
-////            System.out.println("Producción: " + production);
-////            for (int i = 0; i < production.getSizeTokens(); i++) {
-////                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
-////            }
-////        }
-//        HashMap<String, String> declaredVariables = new HashMap<>();
-//        //conocer si la variable esta anteriormente declarada y conocer si se le asigna un dato de tipo compatible
-//        for (Production production : identProd) {
-//            String productionName = production.getName();
-//
-//            // Manejo de declaraciones
-//            if (productionName.startsWith("DEC_")) {
-//                System.out.println("\nproductionName = " + productionName);
-//                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-//                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-//
-//                System.out.println("DECLARACIONES ");
-//                String varName = production.lexemeRank(1); // El nombre del identificador
-//                System.out.println("varName = " + varName);
-//                String varType = productionName.substring(4); // Extraer el tipo del nombre de la producción (ej. "ENTERO", "FLOTANTE")
-//                System.out.println("varType = " + varType);
-//                if (declaredVariables.containsKey(varName)) {
-//                    // Error: Variable ya declarada
-//                    errors.add(new ErrorLSSL(1, " × Error semántico {}: variable ya declarada [#, %]", production, true));
-//                } else {
-//                    // Registrar la variable
-//                    declaredVariables.put(varName, varType);
-//                }
-//            } // Manejo de asignaciones
-//            else if (productionName.startsWith("VAR_") && !production.lexicalCompRank(0).startsWith("DATO_")) {
-//
-//                System.out.println("\nproductionName = " + productionName);
-//                System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-//                System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-//
-//                System.out.println("ASIGNACIONES");
-//                String varName = production.lexemeRank(0); // El identificador usado en la asignación
-//                System.out.println("varName = " + varName);
-//                if (!declaredVariables.containsKey(varName)) {
-//                    // Error: Variable no declarada
-//                    errors.add(new ErrorLSSL(2, " × Error semántico {}: variable no declarada antes de ser usada [#, %]", production, true));
-//                } else {
-//                    // Verificar compatibilidad de tipos (opcional)
-//                    String expectedType = declaredVariables.get(varName);
-//                    System.out.println("expectedType = " + expectedType);
-//                    String assignedValueType = production.lexicalCompRank(production.getSizeTokens() - 2); // Último componente léxico
-//                    System.out.println("assignedValueType = " + assignedValueType);
-//                    if (!isCompatibleType(expectedType, assignedValueType)) {
-//                        errors.add(new ErrorLSSL(3, " × Error semántico {}: asignación incompatible con el tipo de dato [#, %]", production, true));
-//                    }
-//                }
-//            }
-//        }
-//
-//        System.out.println("\n\n=======Verificacion ahora de Funciones SIN PARAMETROS ");
-//        HashMap<String, String> declaredFunctions = new HashMap<>();
-//
-//        for (Production production : identProd) {
-//            String productionName = production.getName();
-//            System.out.println("\nproductionName = " + productionName);
-//            System.out.println("escrito en interfaz: " + production.lexemeRank(0, -1));
-//            System.out.println("Estructura: " + production.lexicalCompRank(0, -1));
-//
-//            if (productionName.startsWith("FUNCION_NOPARAMS")) {
-//                String functionName = production.lexemeRank(2); // Asumiendo que el nombre de la función está en el índice 2
-//                System.out.println("functionName = " + functionName);
-//                String returnType = production.lexicalCompRank(1); // Tipo de retorno después de 'PUBLIC' y opcionalmente 'STATIC'
-//                System.out.println("returnType = " + returnType);
-//
-//                if (declaredFunctions.containsKey(functionName)) {
-//                    // Error: Variable ya declarada
-//                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion ya declarada [#, %]", production, true));
-//                } else {
-//                    // Registrar la variable
-//                    declaredFunctions.put(functionName, returnType); // Guarda la función
-//                }
-//
-//            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() == 4) {
-//                String functionName = production.lexemeRank(0); // Nombre de la función llamada
-//                System.out.println("functionName = " + functionName);
-//                if (!declaredFunctions.containsKey(functionName)) {
-//                    errors.add(new ErrorLSSL(5, " × Error semántico {}: la función '" + functionName + "' no está declarada [#, %]", production, true));
-//                }
-//            }
-//
-//        }
-//
-//        System.out.println("\n\n=======Verificacion ahora de Funciones CON PARAMETROS ");
-//        HashMap<String, List<String>> functionParams = new HashMap<>();
-//
-//        // Validación de funciones con parámetros
-//        for (Production production : identProd) {
-//            String productionName = production.getName();
-//
-//            // Declaración de funciones con parámetros
-//            if (productionName.startsWith("FUNCION_PARAMS")) {
-//                String functionName = production.lexemeRank(2); // Nombre de la función
-//                System.out.println(functionName);
-//                List<String> paramTypes = new ArrayList<>();
-//
-//                // Extraer y validar los parámetros (tipo y nombre)
-//                for (int i = 4; i < production.getSizeTokens() - 2; i += 2) {
-//                    if (production.lexicalCompRank(i).equals("PARENTESIS_C")) {
-//                        break;
-//                    }
-//                    if (production.lexicalCompRank(i).equals("COMA")) {
-//                        i--;
-//                        continue;
-//                    }
-//                    String paramType = production.lexicalCompRank(i);  // Tipo de dato
-//                    paramType = paramType.substring(5);
-////identificar que este dentro de los parentesis, posteriormente identificar que sea un tipo de dato seguido de nombre 
-//                    String paramName = production.lexemeRank(i + 1);  // Nombre del parámetro
-//
-//                    // Agregar el parámetro si es válido
-//                    paramTypes.add(paramType);
-//                }
-//
-//                functionParams.put(functionName, paramTypes); // Registrar parámetros
-//                System.out.println("Function '" + functionName + "' declared with parameters: " + paramTypes);
-//            } else if (productionName.equals("CALL_FUNC") && production.getSizeTokens() > 4) {
-//
-//                String functionName = production.lexemeRank(0); // Nombre de la función
-//
-//                if (functionParams.get(functionName) == null) {
-//                    // Error: Variable ya declarada
-//                    errors.add(new ErrorLSSL(1, " × Error semántico {}: funcion NO declarada [#, %]", production, true));
-//                    break;
-//                }
-//
-//                // Validar los parámetros
-//                List<String> expectedParams = functionParams.get(functionName);
-//
-//                List<String> actualParams = new ArrayList<>();
-//                List<String> nombreParams = new ArrayList<>();
-//
-//                // Extraer los tipos de parámetros pasados en la llamada
-//                for (int i = 2; i < production.getSizeTokens() - 2; i += 2) { // Asumiendo que los parámetros están en índices impares
-//                    actualParams.add(production.lexicalCompRank(i));
-//                    nombreParams.add(production.lexemeRank(i));
-//
-//                }
-//
-//                System.out.println("Esperados" + expectedParams + "\nactuales" + actualParams);
-//                System.out.println("actualParams = " + actualParams);
-//
-//                // Comparar cantidad de parámetros
-//                if (expectedParams.size() != actualParams.size()) {
-//                    errors.add(new ErrorLSSL(
-//                            6,
-//                            "× Error semántico: la función '" + functionName + "' esperaba " + expectedParams.size()
-//                            + " parámetros, pero se encontraron " + actualParams.size() + ". Revisa la cantidad de argumentos proporcionados.",
-//                            production,
-//                            true
-//                    ));
-//                    continue;
-//                }
-//
-//                // Comparar tipos de parámetros
-//                for (int i = 0; i < expectedParams.size(); i++) {
-//                    System.out.println("----------" + actualParams.get(i));
-//                    System.out.println("----------" + expectedParams.get(i));
-//                    if (!isCompatibleType(expectedParams.get(i), actualParams.get(i), nombreParams.get(i), production, declaredVariables)) {
-//                        errors.add(new ErrorLSSL(
-//                                7,
-//                                "× Error semántico: el parámetro " + (i + 1) + " de la función '" + functionName
-//                                + "' esperaba un valor de tipo '" + expectedParams.get(i) + "', pero se proporcionó un valor de tipo '"
-//                                + actualParams.get(i) + "'. Corrige el tipo de dato del argumento.",
-//                                production,
-//                                true
-//                        ));
-//                    }
-//                }
-//                if (production.getSizeTokens() < expectedParams.size()) {
-//                    errors.add(new ErrorLSSL(
-//                            8,
-//                            "× Error semántico: producción malformada para '" + productionName + "'. Verifica que la definición de la función o su llamada sea correcta.",
-//                            production,
-//                            true
-//                    ));
-//                    continue;
-//                }
-//            }
-//        }
+
+    }
+    
+    private String recuperarExpresion(Production production){
+        String cadena = "";
+        for(int i = 1; i < production.getSizeTokens()-1; i++){
+            cadena += production.lexemeRank(i);
+        }
+        return cadena;
     }
 
     private void verificarDeclaracionVariableIf(Production production) {
