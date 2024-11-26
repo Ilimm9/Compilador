@@ -108,7 +108,7 @@ public class Estructura {
                 //si es un retorno valido entero, char, bool
                 if (tipoRetorno.equals(retornoAsignado)) {
                     return false;
-                } else {
+                } else if (esValidoRetorno(retornoAsignado)) {
                     ErrorFuncionEstatica errorFuncionEstatica = new ErrorFuncionEstatica();
                     errorFuncionEstatica.setMensajeError("El tipo de retorno no coincide con el tipo de dato devuelto: " + funcion.getNombre()
                             + "Retorno esperado: " + funcion.getTipoRetorno() + " Retorno regresado: " + funcion.getRetornoAsignado());
@@ -121,6 +121,11 @@ public class Estructura {
         }
 
         return false;
+    }
+    
+    public static boolean esValidoRetorno(String retorno){
+        return retorno.equals("ENTERO") || retorno.equals("FLOTANTE") || retorno.equals("BOOL") 
+                || retorno.equals("CHAR") || retorno.equals("CADENA");
     }
 
     public static boolean identificadorDeclarado(FuncionEstatica funcion) {
@@ -190,6 +195,7 @@ public class Estructura {
 
     // Método para agregar una función no estática
     public static boolean agregarFuncionNoEstatica(FuncionNoEstatica nuevaFuncionNoEstatica) {
+        System.out.println("nuevaFuncionNoEstatica = " + nuevaFuncionNoEstatica);
         if (verificarExistenciaFuncionNoEstatica(nuevaFuncionNoEstatica)) {
             ErrorFuncionNoEstatica errorFuncionNoEstatica = new ErrorFuncionNoEstatica();
             errorFuncionNoEstatica.setMensajeError("La función No estatica ya existe: " + nuevaFuncionNoEstatica.getNombre());
@@ -262,7 +268,7 @@ public class Estructura {
                 }
                 if (tipoRetorno.equals(retornoAsignado)) {
                     return false;
-                } else {
+                } else if (esValidoRetorno(retornoAsignado)) {
                     ErrorFuncionNoEstatica errorFuncionNoEstatica = new ErrorFuncionNoEstatica();
                     errorFuncionNoEstatica.setMensajeError("El tipo de retorno no coincide con el tipo de dato devuelto: " + funcion.getNombre()
                             + "Retorno esperado: " + funcion.getTipoRetorno() + " Retorno regresado: " + funcion.getRetornoAsignado());
@@ -385,7 +391,7 @@ public class Estructura {
                 if (esMismaVariable(usada, declaradaVar)) {
                     if (usada.getTipoDato().equals(declaradaVar.getTipoDato())) {
                         break;
-                    } else {
+                    } else if(esValidoRetorno(usada.getTipoDato())){
                         ErrorVariable errorVariable = new ErrorVariable();
                         errorVariable.setMensajeError("La variable '" + usada.getNombreVariable()
                                 + "' no se le asigno un tipo de dato correcto");

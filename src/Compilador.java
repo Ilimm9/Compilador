@@ -235,17 +235,20 @@ public class Compilador extends javax.swing.JFrame {
         rootPanelLayout.setHorizontalGroup(
             rootPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(rootPanelLayout.createSequentialGroup()
-                .addGap(12, 12, 12)
-                .addGroup(rootPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, rootPanelLayout.createSequentialGroup()
+                .addGroup(rootPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(rootPanelLayout.createSequentialGroup()
+                        .addGap(12, 12, 12)
                         .addComponent(buttonsFilePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(173, 173, 173)
                         .addComponent(panelButtonCompilerExecute, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 693, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 693, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
-                .addGap(17, 17, 17))
+                    .addGroup(rootPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(rootPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jScrollPane1)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 432, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         rootPanelLayout.setVerticalGroup(
             rootPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -259,9 +262,9 @@ public class Compilador extends javax.swing.JFrame {
                     .addGroup(rootPanelLayout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jScrollPane2))
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 391, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(19, Short.MAX_VALUE))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
 
         getContentPane().add(rootPanel);
@@ -363,7 +366,8 @@ public class Compilador extends javax.swing.JFrame {
         //Operaciones Anidados Relacional
         gramatica.loopForFunExecUntilChangeNotDetected(() -> {
             // Grupo para expresiones relacionales
-            gramatica.group("EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR) OPERADOR_RELACIONAL (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR | TRUE | FALSE)");
+            gramatica.group("EXP_RELACIONAL", " (NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR) OPERADOR_RELACIONAL "
+                    + "(NUMERO_ENTERO| NUMERO_FLOTANTE | IDENTIFICADOR | TRUE | FALSE | CARACTER)");
             gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A EXP_RELACIONAL PARENTESIS_C) | EXP_RELACIONAL ");
             gramatica.group("EXP_RELACIONAL", "(PARENTESIS_A)? EXP_RELACIONAL (OPERADOR_RELACIONAL)? (EXP_RELACIONAL)+ (PARENTESIS_C)? ");
         });
@@ -410,19 +414,19 @@ public class Compilador extends javax.swing.JFrame {
         gramatica.group("VAR_CHAR", "(IDENTIFICADOR ASIG_CHAR| DEC_CHAR| DEC_CHAR ASIG_CHAR ) PUNTO_COMA ", true, identProd);
 
         /// ====================== ERRORES SEMANTICOS
-        gramatica.group("ERR_VAR_ENTERO", "(DEC_ENTERO (ASIG_FLOTANTE | ASIG_CADENA |ASIG_BOOL | ASIG_CHAR)) (PUNTO_COMA)? ", true,
+        gramatica.group("VAR_ENTERO", "(DEC_ENTERO (ASIG_FLOTANTE | ASIG_CADENA |ASIG_BOOL | ASIG_CHAR)) PUNTO_COMA ", true,
                 30, "Error Semantico {}: asignacion invalida a un tipo entero [# , %]");
 
-        gramatica.group("ERR_VAR_FLOTANTE", "(DEC_FLOTANTE (ASIG_CHAR | ASIG_CADENA |ASIG_BOOL)) (PUNTO_COMA)? ", true,
+        gramatica.group("VAR_FLOTANTE", "(DEC_FLOTANTE (ASIG_CHAR | ASIG_CADENA |ASIG_BOOL)) PUNTO_COMA ", true,
                 31, "Error Semantico {}: asignacion invalida a un tipo flotante [# , %]");
 
-        gramatica.group("ERR_VAR_BOOL", "(DEC_BOOL (ASIG_ENTERO | ASIG_CADENA |ASIG_FLOTANTE | ASIG_CHAR)) (PUNTO_COMA)? ", true,
+        gramatica.group("VAR_BOOL", "(DEC_BOOL (ASIG_ENTERO | ASIG_CADENA |ASIG_FLOTANTE | ASIG_CHAR)) PUNTO_COMA ", true,
                 32, "Error Semantico {}: asignacion invalida a un tipo booleano [# , %]");
 
-        gramatica.group("ERR_VAR_CHAR", "(DEC_CHAR (ASIG_ENTERO | ASIG_CADENA |ASIG_FLOTANTE | ASIG_BOOL)) (PUNTO_COMA)? ", true,
+        gramatica.group("VAR_CHAR", "(DEC_CHAR (ASIG_ENTERO | ASIG_CADENA |ASIG_FLOTANTE | ASIG_BOOL)) PUNTO_COMA", true,
                 33, "Error Semantico {}: asignacion invalida a un tipo character [# , %]");
 
-        gramatica.group("ERR_VAR_CADENA", "(DEC_CADENA (ASIG_ENTERO | ASIG_CHAR |ASIG_FLOTANTE | ASIG_BOOL)) (PUNTO_COMA)? ", true,
+        gramatica.group("VAR_CADENA", "(DEC_CADENA (ASIG_ENTERO | ASIG_CHAR |ASIG_FLOTANTE | ASIG_BOOL)) PUNTO_COMA ", true,
                 34, "Error Semantico {}: asignacion invalida a un tipo cadena [# , %]");
 
         gramatica.group("POS", "(IDENTIFICADOR DECREMENTAL) | (IDENTIFICADOR INCREMENTAL)");
@@ -430,12 +434,19 @@ public class Compilador extends javax.swing.JFrame {
 
         gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
                 + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C PUNTO_COMA", true, identProd);
+        gramatica.group("CALL_FUNC", "IDENTIFICADOR PARENTESIS_A ( (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO)"
+                + " (COMA (IDENTIFICADOR||NUMERO_ENTERO||NUMERO_FLOTANTE||CARACTER||TRUE||FALSE||CADENA_TEXTO))*)? PARENTESIS_C ", true, identProd);
 
         //=========CONCATENAR
-        gramatica.group("EXP_CONCATENACION", " (CADENA_TEXTO | IDENTIFICADOR |NUMERO_ENTERO|NUMERO_FLOTANTE| EXP_CONCATENACION) SUMA (CADENA_TEXTO |NUMERO_ENTERO|NUMERO_FLOTANTE| IDENTIFICADOR | EXP_CONCATENACION)+ ", true, identProd
+        gramatica.group("EXP_CONCATENACION", " (CADENA_TEXTO) "
+                + "SUMA CALL_FUNC ", true, identProd
+        );
+        gramatica.group("EXP_CONCATENACION", " (CADENA_TEXTO | IDENTIFICADOR |NUMERO_ENTERO|NUMERO_FLOTANTE| EXP_CONCATENACION) "
+                + "SUMA (CADENA_TEXTO |NUMERO_ENTERO|NUMERO_FLOTANTE| IDENTIFICADOR | EXP_CONCATENACION)+ ", true, identProd
         );
 
         // Definir System.out.println
+        gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A PARENTESIS_C PUNTO_COMA");
         gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR |EXP_CONCATENACION) PARENTESIS_C PUNTO_COMA");
         gramatica.group("CONSOLA", "SYSTEM PUNTO OUT PUNTO PRINTLN PARENTESIS_A ( EXP_ARIMETICA | CADENA_TEXTO | IDENTIFICADOR) PARENTESIS_C ", true,
                 2, "Error sintáctico: falta punto y coma [# , %]");
@@ -497,28 +508,44 @@ public class Compilador extends javax.swing.JFrame {
         //=================FUNCIONES NO ESTATICAS 
         gramatica.group("FUNCION_NOPARAMS", "PUBLIC VOID IDENTIFICADOR  "
                 + " PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
+        gramatica.group("FUNCION_NOPARAMS", "PUBLIC VOID IDENTIFICADOR  "
+                + " PARENTESIS_A PARENTESIS_C BLOQUE_RETORNO ", true, 50, "Error Semantico [# , %]: La funcion no puede retornar valores es de tipo VOID", identProd);
 
         gramatica.group("FUNCION_NOPARAMS_RETORNO", "PUBLIC FUNCION  "
                 + " PARENTESIS_C BLOQUE_RETORNO ", true, identProd);
+        gramatica.group("FUNCION_NOPARAMS_RETORNO", "PUBLIC FUNCION  "
+                + " PARENTESIS_C BLOQUE ", true, 51, "Error Semantico [# , %]: La funcion tiene que retornar un valor", identProd);
 
         gramatica.group("FUNCION_PARAMS", "PUBLIC VOID IDENTIFICADOR  "
                 + " PARAMETROS BLOQUE ", true, identProd);
+        gramatica.group("FUNCION_PARAMS", "PUBLIC VOID IDENTIFICADOR  "
+                + " PARAMETROS BLOQUE_RETORNO ", true, 52, "Error Semantico [# , %]: La funcion no puede retornar valores es de tipo VOID", identProd);
 
         gramatica.group("FUNCION_PARAMS_RETORNO", "PUBLIC FUNCION  "
                 + " PARAMETROS BLOQUE_RETORNO ", true, identProd);
+        gramatica.group("FUNCION_PARAMS_RETORNO", "PUBLIC FUNCION  "
+                + " PARAMETROS BLOQUE ", true, 53, "Error Semantico [# , %]: La funcion tiene que retornar un valor ", identProd);
 
         //================== FUNCIONES ESTATICAS
         gramatica.group("FUNCION_EST_NOPARAMS", "PUBLIC STATIC VOID IDENTIFICADOR  "
                 + " PARENTESIS_A PARENTESIS_C BLOQUE ", true, identProd);
+        gramatica.group("FUNCION_EST_NOPARAMS", "PUBLIC STATIC VOID IDENTIFICADOR  "
+                + " PARENTESIS_A PARENTESIS_C BLOQUE_RETORNO ", true, 54, "Error Semantico [# , %]: La funcion NO puede retornar es de tipo VOID ", identProd);
 
         gramatica.group("FUNCION_EST_NOPARAMS_RETORNO", "PUBLIC STATIC FUNCION  "
                 + " PARENTESIS_C BLOQUE_RETORNO ", true, identProd);
+        gramatica.group("FUNCION_EST_NOPARAMS_RETORNO", "PUBLIC STATIC FUNCION  "
+                + " PARENTESIS_C BLOQUE ", true, 55, "Error Semantico [# , %]: La funcion debe retornar un valor ", identProd);
 
         gramatica.group("FUNCION_EST_PARAMS", "PUBLIC STATIC VOID IDENTIFICADOR  "
                 + " PARAMETROS BLOQUE ", true, identProd);
+        gramatica.group("FUNCION_EST_PARAMS", "PUBLIC STATIC VOID IDENTIFICADOR  "
+                + " PARAMETROS BLOQUE_RETORNO ", true, 56, "Error Semantico [# , %]: La funcion NO puede retornar es de tipo VOID ", identProd);
 
         gramatica.group("FUNCION_EST_PARAMS_RETORNO", "PUBLIC STATIC FUNCION  "
                 + " PARAMETROS BLOQUE_RETORNO ", true, identProd);
+        gramatica.group("FUNCION_EST_PARAMS_RETORNO", "PUBLIC STATIC FUNCION  "
+                + " PARAMETROS BLOQUE ", true, 57, "Error Semantico [# , %]: La funcion tiene que retornar un valor ", identProd);
 
         //constructor
         gramatica.group("FUNCION_CONST_PARAMS", " PUBLIC IDENTIFICADOR PARAMETROS BLOQUE ", true, identProd);
@@ -588,14 +615,14 @@ public class Compilador extends javax.swing.JFrame {
     private void semanticAnalysis() {
 
         System.out.println("\n\n\n");
-        for (Production production : identProd) {
-            String productionName = production.getName();
-            System.out.println("productionName = " + productionName);
+//        for (Production production : identProd) {
+//            String productionName = production.getName();
+//            System.out.println("productionName = " + productionName);
 //            for (int i = 0; i < production.getSizeTokens(); i++) {
 //                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
 //            }
-        }
-        System.out.println("\n\n\n");
+//        }
+//        System.out.println("\n\n\n");
         Estructura.limpiarListas();
 
         for (Production production : identProd) {
@@ -828,17 +855,23 @@ public class Compilador extends javax.swing.JFrame {
                 Estructura.agregarLlamadaFuncion(llamadaFuncion);
             } else //caso contrario
             if (productionName.equals("CALL_FUNC") && production.getSizeTokens() > 4) {
+                
+                for (int i = 0; i < production.getSizeTokens(); i++) {
+                System.out.println("Lexema " + i + ": " + production.lexemeRank(i));
+            }
+                
                 llamadaFuncion = new LlamadaFuncion();
                 llamadaFuncion.setNombre(production.lexemeRank(0));
                 // Extraer los tipos de parámetros pasados en la llamada
-                for (int i = 2; i < production.getSizeTokens() - 2; i += 2) { // Asumiendo que los parámetros están en índices impares
+                for (int i = 2; i <= production.getSizeTokens() - 2; i += 2) { // Asumiendo que los parámetros están en índices impares
                     llamadaFuncion.agregarParametro(production.lexemeRank(i), regresarTipoDato(production.lexicalCompRank(i)));
-
                 }
                 llamadaFuncion.setFilaInicial(production.getLine());
                 llamadaFuncion.setColumna(production.getColumn());
+                System.out.println("llamadaFuncion.toString() = " + llamadaFuncion.toString());
                 Estructura.agregarLlamadaFuncion(llamadaFuncion);
             }
+
             verificarConcatenacion(production, Estructura.getVariablesDeclaradas());
 
             verificarDeclaracionVariableIf(production);
@@ -1096,8 +1129,13 @@ public class Compilador extends javax.swing.JFrame {
 
     private void verificarDeclaracionVariableIf(Production production) {
         String productionName = production.getName();
-        String nombreVariableIf = production.lexemeRank(2);
+
         if (productionName.equals("CONDICIONAL_IF")) {
+            String nombreVariableIf = production.lexemeRank(2);
+            String siguienteValor = production.lexicalCompRank(3);
+            if (!siguienteValor.equals("PARENTESIS_C")) {
+                return;
+            }
             boolean declarada = false;
             boolean compatible = false;
             for (Variable variable : Estructura.getVariablesDeclaradas()) {
@@ -1115,9 +1153,9 @@ public class Compilador extends javax.swing.JFrame {
                 //                            13, "× Error semántico: el identificador usado en la concatenacion no está declarado.", production, true
                 ));
             }
-            if (!compatible) {
+            if (!compatible && declarada) {
                 errors.add(new ErrorLSSL(
-                        12, "× Error semántico [#, %] : El identificador del condicional no es un tipo compatible.  ", production, true
+                        12, "× Error semántico [#, %] : El identificador del condicional no es un tipo compatible se requiere un BOOL.  ", production, true
                 //                            13, "× Error semántico: el identificador usado en la concatenacion no está declarado.", production, true
                 ));
             }
@@ -1130,6 +1168,9 @@ public class Compilador extends javax.swing.JFrame {
         String productionName = production.getName();
 
         if (productionName.equals("EXP_CONCATENACION")) {
+            if(production.getSizeTokens() > 4){
+                return;
+            }
             String leftOperand = production.lexicalCompRank(0);
             if (!isValidOperand(leftOperand)) {
                 errors.add(new ErrorLSSL(

@@ -1,23 +1,28 @@
-public class Principal{
+public class Pera{
+public void Area(int a, double b){
+int area = (a*b)/2;
+return area;
+}
+
+public static int perimetro(double x, double y){
+double resultado;
+if(x == 'a'){
+resultado = x + 3.1416;
+} else {
+resultado = y + 2*3.1416;
+}
+return resultado;
+}
 
 public static void main(String[] args){
-int valor = 3;
-int numero2 = 1;
-restar();
-boolean respuesta = true;
-if(respuesta){
-}
-System.out.println("La respuesta es : " + respuesta);
-sumar(respuesta, valor);
-}
+int a = 5.0;
+int b = 10;
 
-public static void  sumar(boolean valor, int valor2) {
+System.out.println("Area" + Area(a,b) );
 
+int x = 10;
+int y = 20;
+System.out.println("Perimetro" + perimetro(x,y) );
 }
-
-public String restar(){
-return "HolaMundo";
-}
-
 
 }
